@@ -1,0 +1,94 @@
+# ===========================
+# カスタムバイオーム定義
+# 古代砂漠遺跡 / ancient_desert
+# ===========================
+name: "ancient_desert"
+display-name: "&e古代砂漠遺跡"
+description: "古代文明の遺跡が眠る灼熱の砂漠地帯"
+icon: SUSPICIOUS_SAND
+
+terrain:
+  type: FLAT
+  min-height: 60
+  max-height: 75
+  noise-scale-multiplier: 0.7
+  height-multiplier: 0.6
+
+blocks:
+  surface: SAND
+  subsurface: SANDSTONE
+  deep: STONE
+  bedrock-layer: DEEPSLATE
+  fluid: WATER
+  sea-level: 62
+  surface-decorations:
+    - block: DEAD_BUSH
+      chance: 0.05
+    - block: SUSPICIOUS_SAND
+      chance: 0.02
+
+features:
+  trees:
+    enabled: true
+    types:
+      - type: ACACIA
+        weight: 100
+    max-per-chunk: 2
+    chance: 0.15
+  vegetation:
+    enabled: true
+    plants:
+      - block: DEAD_BUSH
+        chance: 0.4
+        max-per-chunk: 16
+      - block: CACTUS
+        chance: 0.2
+        max-per-chunk: 8
+  ores:
+    enabled: true
+    veins:
+      - block: GOLD_ORE
+        min-height: -64
+        max-height: 32
+        vein-size: 9
+        chance: 0.6
+      - block: COAL_ORE
+        min-height: 0
+        max-height: 128
+        vein-size: 17
+        chance: 0.7
+  structures:
+    caves: true
+    dungeons: false
+
+spawns:
+  day:
+    - entity: HUSK
+      min: 2
+      max: 4
+      weight: 10
+    - entity: RABBIT
+      min: 1
+      max: 3
+      weight: 5
+  night:
+    - entity: HUSK
+      min: 4
+      max: 8
+      weight: 15
+    - entity: SKELETON
+      min: 1
+      max: 3
+      weight: 8
+  water: []
+
+weather:
+  temperature: 2.0
+  humidity: 0.0
+  rain-chance: 0.0
+  sky-color: "F9B44C"
+
+ambience:
+  particles:
+    enabled: false
+  sounds: []

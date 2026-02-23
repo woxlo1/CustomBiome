@@ -1,0 +1,48 @@
+name: CustomBiome
+main: com.woxloi.custombiome.CustomBiomePlugin
+version: 1.0.0
+api-version: "1.20"
+author: woxloi
+description: >-
+  カスタムバイオームを YAML で定義・管理できる WoxloiDevAPI 対応プラグイン。
+  WorldEdit / WorldGuard 連携・MySQL 永続化をサポート。
+
+depend:
+  - WoxloiDevAPI
+  - WorldEdit
+  - WorldGuard
+
+softdepend:
+  - Vault
+  - PlaceholderAPI
+
+load: POSTWORLD
+
+commands:
+  cbiome:
+    description: CustomBiome メインコマンド
+    usage: /<command> <subcommand> [args]
+    permission: custombiome.use
+
+permissions:
+  custombiome.use:
+    description: /cbiome の基本使用権限
+    default: true
+  custombiome.admin:
+    description: 管理者権限（生成・リロードなど）
+    default: op
+  custombiome.create:
+    description: バイオーム定義の作成
+    default: op
+  custombiome.generate:
+    description: カスタムワールドの生成
+    default: op
+  custombiome.tp:
+    description: バイオームへのテレポート
+    default: op
+  custombiome.reload:
+    description: 設定・バイオームのリロード
+    default: op
+  custombiome.region:
+    description: リージョン割り当て操作
+    default: op

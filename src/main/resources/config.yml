@@ -1,0 +1,66 @@
+# CustomBiome メイン設定
+
+# ===========================
+# データベース（MySQL）
+# ===========================
+database:
+  host: "localhost"
+  port: 3306
+  name: "custombiome"
+  username: "root"
+  password: "password"
+  useSSL: false
+  # 接続プールサイズ
+  pool-size: 10
+
+# ===========================
+# 一般設定
+# ===========================
+settings:
+  # バイオーム定義ファイルのフォルダ名
+  biomes-dir: "biomes"
+  # デバッグログ出力
+  debug: false
+  # メッセージプレフィックス
+  prefix: "§e[§b§lCustomBiome§e] §r"
+
+# ===========================
+# ワールド生成
+# ===========================
+world:
+  # 生成ワールド名のプレフィックス
+  prefix: "cb_"
+  # デフォルトシード（0 でランダム）
+  default-seed: 0
+  # チャンクキャッシュサイズ
+  chunk-cache-size: 256
+
+# ===========================
+# 地形ノイズ デフォルト値
+# （各バイオームYAMLで上書き可能）
+# ===========================
+terrain:
+  noise-scale: 0.005
+  height-multiplier: 64
+  base-height: 64
+  octaves: 6
+  persistence: 0.5
+  lacunarity: 2.0
+
+# ===========================
+# GUI
+# ===========================
+ui:
+  menu-title: "&8&l[ &a&lCustomBiome &8&l]"
+  items-per-page: 45
+
+# ===========================
+# WorldGuard 連携
+# ===========================
+worldguard:
+  # バイオーム割り当て時に WG リージョンを自動作成するか
+  auto-create-region: true
+  # 自動作成リージョンのプレフィックス
+  region-prefix: "cb_"
+  # リージョン作成時にビルドフラグを deny するか
+  deny-build-by-default: false

@@ -1,0 +1,108 @@
+# ===========================
+# カスタムバイオーム定義
+# 魔法の森 / magic_forest
+# ===========================
+name: "magic_forest"
+display-name: "&a魔法の森"
+description: "光り輝くキノコと古代の木々が広がる神秘的な森"
+icon: WARPED_FUNGUS
+
+terrain:
+  type: HILLS          # FLAT / HILLS / MOUNTAINS / OCEAN / PLATEAU
+  min-height: 60
+  max-height: 120
+  noise-scale-multiplier: 1.2
+  height-multiplier: 1.5
+
+blocks:
+  surface: GRASS_BLOCK
+  subsurface: DIRT
+  deep: STONE
+  bedrock-layer: DEEPSLATE
+  fluid: WATER
+  sea-level: 62
+  surface-decorations:
+    - block: MOSS_BLOCK
+      chance: 0.15
+    - block: ROOTED_DIRT
+      chance: 0.08
+
+features:
+  trees:
+    enabled: true
+    types:
+      - type: DARK_OAK
+        weight: 50
+      - type: OAK
+        weight: 30
+      - type: BIRCH
+        weight: 20
+    max-per-chunk: 8
+    chance: 0.7
+  vegetation:
+    enabled: true
+    plants:
+      - block: GRASS
+        chance: 0.6
+        max-per-chunk: 64
+      - block: TALL_GRASS
+        chance: 0.3
+        max-per-chunk: 20
+      - block: BLUE_ORCHID
+        chance: 0.1
+        max-per-chunk: 8
+      - block: GLOWSTONE
+        chance: 0.03
+        max-per-chunk: 4
+  ores:
+    enabled: true
+    veins:
+      - block: COAL_ORE
+        min-height: 0
+        max-height: 128
+        vein-size: 17
+        chance: 0.8
+      - block: EMERALD_ORE
+        min-height: -16
+        max-height: 32
+        vein-size: 3
+        chance: 0.2
+  structures:
+    caves: true
+    dungeons: true
+
+spawns:
+  day:
+    - entity: FOX
+      min: 1
+      max: 3
+      weight: 10
+    - entity: RABBIT
+      min: 2
+      max: 4
+      weight: 8
+  night:
+    - entity: WITCH
+      min: 1
+      max: 2
+      weight: 5
+  water:
+    - entity: SALMON
+      min: 1
+      max: 4
+      weight: 6
+
+weather:
+  temperature: 0.7
+  humidity: 0.9
+  rain-chance: 0.4
+  sky-color: "7BA4FF"
+
+ambience:
+  particles:
+    enabled: true
+    type: ENCHANTMENT_TABLE
+    density: 0.02
+  sounds:
+    - sound: AMBIENT_WARPED_FOREST_MOOD
+      chance: 0.01
