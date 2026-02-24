@@ -2,7 +2,7 @@ package com.woxloi.custombiome.api
 
 import com.woxloi.custombiome.biome.CustomBiome
 import com.woxloi.custombiome.biome.BiomeLoader
-import com.woxloi.devapi.utils.Logger
+import com.woxloi.custombiome.utils.Logger
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 

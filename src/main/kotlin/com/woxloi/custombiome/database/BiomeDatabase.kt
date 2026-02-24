@@ -1,11 +1,10 @@
 package com.woxloi.custombiome.database
 
-import com.woxloi.custombiome.biome.CustomBiome
+import com.woxloi.custombiome.utils.Logger
 import com.woxloi.custombiome.world.CustomWorld
 import com.woxloi.devapi.database.DatabaseRegistry
 import com.woxloi.devapi.database.DatabaseTable
 import com.woxloi.devapi.database.sql.MySQLProvider
-import com.woxloi.devapi.utils.Logger
 
 /**
  * CustomBiome の MySQL 永続化レイヤー。

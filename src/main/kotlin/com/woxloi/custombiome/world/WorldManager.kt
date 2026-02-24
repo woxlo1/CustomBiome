@@ -3,7 +3,7 @@ package com.woxloi.custombiome.world
 import com.woxloi.custombiome.biome.CustomBiome
 import com.woxloi.custombiome.database.BiomeDatabase
 import com.woxloi.custombiome.generator.CustomChunkGenerator
-import com.woxloi.devapi.utils.Logger
+import com.woxloi.custombiome.utils.Logger
 import org.bukkit.Bukkit
 import org.bukkit.World
 import org.bukkit.WorldCreator

@@ -1,7 +1,7 @@
 package com.woxloi.custombiome.generator
 
 import com.woxloi.custombiome.biome.*
-import com.woxloi.devapi.utils.Logger
+import com.woxloi.custombiome.CustomBiomePlugin
 import org.bukkit.Chunk
 import org.bukkit.Material
 import org.bukkit.TreeType as BukkitTreeType

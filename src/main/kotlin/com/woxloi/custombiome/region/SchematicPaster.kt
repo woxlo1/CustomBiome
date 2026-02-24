@@ -1,8 +1,5 @@
 package com.woxloi.custombiome.region
 
-import com.woxloi.devapi.hooks.world.WorldEditAPI
-import com.woxloi.devapi.utils.Logger
-import com.sk89q.worldedit.EditSession
 import com.sk89q.worldedit.WorldEdit
 import com.sk89q.worldedit.bukkit.BukkitAdapter
 import com.sk89q.worldedit.extent.clipboard.Clipboard
@@ -10,6 +7,7 @@ import com.sk89q.worldedit.extent.clipboard.io.ClipboardFormats
 import com.sk89q.worldedit.function.operation.Operations
 import com.sk89q.worldedit.math.BlockVector3
 import com.sk89q.worldedit.session.ClipboardHolder
+import com.woxloi.custombiome.utils.Logger
 import org.bukkit.Location
 import java.io.File
 import java.io.FileInputStream

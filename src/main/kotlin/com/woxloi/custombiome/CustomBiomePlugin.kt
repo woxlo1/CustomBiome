@@ -6,12 +6,12 @@ import com.woxloi.custombiome.database.BiomeDatabase
 import com.woxloi.custombiome.listener.PlayerListener
 import com.woxloi.custombiome.listener.WorldListener
 import com.woxloi.custombiome.region.RegionManager
+import com.woxloi.custombiome.utils.Logger
 import com.woxloi.custombiome.utils.Msg
 import com.woxloi.custombiome.world.WorldManager
 import com.woxloi.devapi.command.CommandRegistry
 import com.woxloi.devapi.database.sql.MySQLProvider
 import com.woxloi.devapi.hooks.HookManager
-import com.woxloi.devapi.utils.Logger
 import org.bukkit.plugin.java.JavaPlugin
 import java.io.File
 

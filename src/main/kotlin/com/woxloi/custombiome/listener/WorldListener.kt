@@ -1,9 +1,8 @@
 package com.woxloi.custombiome.listener
 
-import com.woxloi.custombiome.generator.CustomChunkGenerator
 import com.woxloi.custombiome.generator.FeaturePlacer
+import com.woxloi.custombiome.utils.Logger
 import com.woxloi.custombiome.world.WorldManager
-import com.woxloi.devapi.utils.Logger
 import com.woxloi.devapi.utils.scheduler.TaskScheduler
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority

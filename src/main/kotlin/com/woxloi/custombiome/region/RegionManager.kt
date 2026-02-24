@@ -1,16 +1,13 @@
 package com.woxloi.custombiome.region
 
+import com.sk89q.worldedit.math.BlockVector3
+import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion
 import com.woxloi.custombiome.api.BiomeRegistry
 import com.woxloi.custombiome.biome.CustomBiome
 import com.woxloi.custombiome.database.BiomeDatabase
-import com.woxloi.devapi.hooks.world.WorldGuardAPI
+import com.woxloi.custombiome.utils.Logger
 import com.woxloi.devapi.hooks.world.WorldEditAPI
-import com.woxloi.devapi.utils.Logger
-import com.sk89q.worldguard.protection.flags.Flags
-import com.sk89q.worldguard.protection.flags.StateFlag
-import com.sk89q.worldguard.protection.managers.RegionManager
-import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion
-import com.sk89q.worldedit.math.BlockVector3
+import com.woxloi.devapi.hooks.world.WorldGuardAPI
 import org.bukkit.Location
 import org.bukkit.entity.Player
 import java.util.concurrent.ConcurrentHashMap

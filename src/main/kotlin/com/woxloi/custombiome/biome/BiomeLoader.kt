@@ -1,6 +1,6 @@
 package com.woxloi.custombiome.biome
 
-import com.woxloi.devapi.utils.Logger
+import com.woxloi.custombiome.utils.Logger
 import org.bukkit.Material
 import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.entity.EntityType
