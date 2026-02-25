@@ -1,17 +1,8 @@
 package com.woxloi.custombiome.biome
 
 import org.bukkit.Material
-import org.bukkit.Sound
 import org.bukkit.entity.EntityType
 
-// ================================================================
-// CustomBiome データクラス群
-// バイオームYAMLの構造をそのままKotlinで表現する
-// ================================================================
-
-/**
- * カスタムバイオームのルートデータクラス
- */
 data class CustomBiome(
     val name: String,
     val displayName: String,
@@ -24,13 +15,8 @@ data class CustomBiome(
     val weather: WeatherSettings,
     val ambience: AmbienceSettings
 ) {
-    /** バイオームの識別キー（小文字・スペース→アンダースコア） */
     val key: String get() = name.lowercase().replace(" ", "_")
 }
-
-// ----------------------------------------------------------------
-// 地形
-// ----------------------------------------------------------------
 
 data class TerrainSettings(
     val type: TerrainType = TerrainType.HILLS,
@@ -40,17 +26,7 @@ data class TerrainSettings(
     val heightMultiplier: Double = 1.0
 )
 
-enum class TerrainType {
-    FLAT,
-    HILLS,
-    MOUNTAINS,
-    OCEAN,
-    PLATEAU
-}
-
-// ----------------------------------------------------------------
-// ブロックパレット
-// ----------------------------------------------------------------
+enum class TerrainType { FLAT, HILLS, MOUNTAINS, OCEAN, PLATEAU }
 
 data class BlockPaletteSettings(
     val surface: Material = Material.GRASS_BLOCK,
@@ -62,14 +38,7 @@ data class BlockPaletteSettings(
     val surfaceDecorations: List<SurfaceDecoration> = emptyList()
 )
 
-data class SurfaceDecoration(
-    val block: Material,
-    val chance: Double   // 0.0 ～ 1.0
-)
-
-// ----------------------------------------------------------------
-// 地物
-// ----------------------------------------------------------------
+data class SurfaceDecoration(val block: Material, val chance: Double)
 
 data class FeatureSettings(
     val trees: TreeSettings = TreeSettings(),
@@ -85,30 +54,15 @@ data class TreeSettings(
     val chance: Double = 0.5
 )
 
-data class TreeEntry(
-    val type: TreeType,
-    val weight: Int
-)
+data class TreeEntry(val type: TreeType, val weight: Int)
 
-enum class TreeType {
-    OAK, BIRCH, SPRUCE, JUNGLE, DARK_OAK, ACACIA, CHERRY, AZALEA
-}
+enum class TreeType { OAK, BIRCH, SPRUCE, JUNGLE, DARK_OAK, ACACIA, CHERRY, AZALEA }
 
-data class VegetationSettings(
-    val enabled: Boolean = true,
-    val plants: List<PlantEntry> = emptyList()
-)
+data class VegetationSettings(val enabled: Boolean = true, val plants: List<PlantEntry> = emptyList())
 
-data class PlantEntry(
-    val block: Material,
-    val chance: Double,
-    val maxPerChunk: Int
-)
+data class PlantEntry(val block: Material, val chance: Double, val maxPerChunk: Int)
 
-data class OreSettings(
-    val enabled: Boolean = true,
-    val veins: List<OreVein> = emptyList()
-)
+data class OreSettings(val enabled: Boolean = true, val veins: List<OreVein> = emptyList())
 
 data class OreVein(
     val block: Material,
@@ -118,14 +72,7 @@ data class OreVein(
     val chance: Double
 )
 
-data class StructureSettings(
-    val caves: Boolean = true,
-    val dungeons: Boolean = false
-)
-
-// ----------------------------------------------------------------
-// スポーン
-// ----------------------------------------------------------------
+data class StructureSettings(val caves: Boolean = true, val dungeons: Boolean = false)
 
 data class SpawnSettings(
     val day: List<SpawnEntry> = emptyList(),
@@ -133,16 +80,7 @@ data class SpawnSettings(
     val water: List<SpawnEntry> = emptyList()
 )
 
-data class SpawnEntry(
-    val entity: EntityType,
-    val min: Int,
-    val max: Int,
-    val weight: Int
-)
-
-// ----------------------------------------------------------------
-// 天気
-// ----------------------------------------------------------------
+data class SpawnEntry(val entity: EntityType, val min: Int, val max: Int, val weight: Int)
 
 data class WeatherSettings(
     val temperature: Double = 0.5,
@@ -150,10 +88,6 @@ data class WeatherSettings(
     val rainChance: Double = 0.3,
     val skyColor: String = "7BA4FF"
 )
-
-// ----------------------------------------------------------------
-// アンビエンス
-// ----------------------------------------------------------------
 
 data class AmbienceSettings(
     val particles: ParticleAmbienceSettings = ParticleAmbienceSettings(),
@@ -166,7 +100,4 @@ data class ParticleAmbienceSettings(
     val density: Double = 0.01
 )
 
-data class SoundEntry(
-    val sound: String,
-    val chance: Double
-)
+data class SoundEntry(val sound: String, val chance: Double)

@@ -4,22 +4,14 @@ import com.woxloi.custombiome.CustomBiomePlugin
 import org.bukkit.ChatColor
 
 object Logger {
+    private const val PREFIX = "§e[§b§lCustomBiome§e] §r"
 
-    private var prefix: String = "§e[§b§lCustomBiomeLogger§e] §r"
-
-    fun info(message: String) {
-        CustomBiomePlugin.instance.server.consoleSender.sendMessage(prefix + ChatColor.WHITE + message)
-    }
-
-    fun success(message: String) {
-        CustomBiomePlugin.instance.server.consoleSender.sendMessage(prefix + ChatColor.GREEN + message)
-    }
-
-    fun warn(message: String) {
-        CustomBiomePlugin.instance.server.consoleSender.sendMessage(prefix + ChatColor.YELLOW + message)
-    }
-
-    fun error(message: String) {
-        CustomBiomePlugin.instance.server.consoleSender.sendMessage(prefix + ChatColor.RED + message)
-    }
+    fun info(message: String) =
+        CustomBiomePlugin.instance.server.consoleSender.sendMessage(PREFIX + ChatColor.WHITE + message)
+    fun success(message: String) =
+        CustomBiomePlugin.instance.server.consoleSender.sendMessage(PREFIX + ChatColor.GREEN + message)
+    fun warn(message: String) =
+        CustomBiomePlugin.instance.server.consoleSender.sendMessage(PREFIX + ChatColor.YELLOW + message)
+    fun error(message: String) =
+        CustomBiomePlugin.instance.server.consoleSender.sendMessage(PREFIX + ChatColor.RED + message)
 }

@@ -2,38 +2,34 @@ package com.woxloi.custombiome.command.sub
 
 import com.woxloi.custombiome.CustomBiomePlugin
 import com.woxloi.custombiome.utils.Msg
-import com.woxloi.devapi.command.CommandNode
+import org.bukkit.command.CommandSender
 import java.io.File
 
 object CreateCommand {
-    fun node() = CommandNode(
-        name        = "create",
-        aliases     = listOf("new"),
-        permission  = "custombiome.create",
-        description = "バイオーム定義YAMLのテンプレートを生成します",
-        usage       = "/cbiome create <biome_name>",
-        action      = { sender, args ->
-            val name = args.getOrNull(0)
-            if (name == null) {
-                Msg.send(sender, "&c使い方: /cbiome create <biome_name>")
-                return@CommandNode
-            }
 
-            val key      = name.lowercase().replace(" ", "_")
-            val biomesDir = File(CustomBiomePlugin.instance.dataFolder, "biomes")
-            if (!biomesDir.exists()) biomesDir.mkdirs()
-
-            val file = File(biomesDir, "$key.yml")
-            if (file.exists()) {
-                Msg.send(sender, "&c'&e$key.yml&c' はすでに存在します。")
-                return@CommandNode
-            }
-
-            file.writeText(generateTemplate(key, name))
-            Msg.send(sender, "&aテンプレートを生成しました: &ebiomes/$key.yml")
-            Msg.send(sender, "&7編集後に &e/cbiome reload &7でロードできます。")
+    fun execute(sender: CommandSender, args: List<String>) {
+        if (!sender.hasPermission("custombiome.create")) {
+            Msg.send(sender, "&cこのコマンドを実行する権限がありません。")
+            return
         }
-    )
+        val name = args.getOrNull(0)
+        if (name == null) {
+            Msg.send(sender, "&c使い方: /cbiome create <biome_name>")
+            return
+        }
+        val key = name.lowercase().replace(" ", "_")
+        val biomesDir = File(CustomBiomePlugin.instance.dataFolder, "biomes")
+        if (!biomesDir.exists()) biomesDir.mkdirs()
+
+        val file = File(biomesDir, "$key.yml")
+        if (file.exists()) {
+            Msg.send(sender, "&c'&e$key.yml&c' はすでに存在します。")
+            return
+        }
+        file.writeText(generateTemplate(key, name))
+        Msg.send(sender, "&aテンプレートを生成しました: &ebiomes/$key.yml")
+        Msg.send(sender, "&7編集後に &e/cbiome reload &7でロードできます。")
+    }
 
     private fun generateTemplate(key: String, displayName: String): String = """
 # ===========================

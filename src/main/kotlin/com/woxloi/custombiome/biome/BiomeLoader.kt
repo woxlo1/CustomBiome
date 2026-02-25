@@ -6,9 +6,6 @@ import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.entity.EntityType
 import java.io.File
 
-/**
- * バイオーム定義YAML → CustomBiome データクラスへの変換を担当。
- */
 object BiomeLoader {
 
     fun load(file: File): CustomBiome? {
@@ -22,28 +19,14 @@ object BiomeLoader {
         }
     }
 
-    // ----------------------------------------------------------------
-    // 内部パース処理
-    // ----------------------------------------------------------------
-
     private fun parseCustomBiome(cfg: YamlConfiguration, fallbackName: String): CustomBiome {
         val name        = cfg.getString("name", fallbackName)!!
         val displayName = color(cfg.getString("display-name", name)!!)
         val description = cfg.getString("description", "")!!
         val icon        = parseMaterial(cfg.getString("icon"), Material.GRASS_BLOCK)
-
-        return CustomBiome(
-            name        = name,
-            displayName = displayName,
-            description = description,
-            icon        = icon,
-            terrain     = parseTerrain(cfg),
-            blocks      = parseBlocks(cfg),
-            features    = parseFeatures(cfg),
-            spawns      = parseSpawns(cfg),
-            weather     = parseWeather(cfg),
-            ambience    = parseAmbience(cfg)
-        )
+        return CustomBiome(name, displayName, description, icon,
+            parseTerrain(cfg), parseBlocks(cfg), parseFeatures(cfg),
+            parseSpawns(cfg), parseWeather(cfg), parseAmbience(cfg))
     }
 
     private fun parseTerrain(cfg: YamlConfiguration): TerrainSettings {
@@ -64,7 +47,6 @@ object BiomeLoader {
             val chance = (map["chance"] as? Number)?.toDouble() ?: 0.0
             SurfaceDecoration(block, chance)
         } ?: emptyList()
-
         return BlockPaletteSettings(
             surface            = parseMaterial(s?.getString("surface"), Material.GRASS_BLOCK),
             subsurface         = parseMaterial(s?.getString("subsurface"), Material.DIRT),
@@ -79,7 +61,6 @@ object BiomeLoader {
     private fun parseFeatures(cfg: YamlConfiguration): FeatureSettings {
         val fs = cfg.getConfigurationSection("features")
 
-        // --- 木 ---
         val ts = fs?.getConfigurationSection("trees")
         val treeTypes = ts?.getMapList("types")?.mapNotNull { map ->
             val typeName = map["type"]?.toString() ?: return@mapNotNull null
@@ -94,7 +75,6 @@ object BiomeLoader {
             chance      = ts?.getDouble("chance", 0.5) ?: 0.5
         )
 
-        // --- 植生 ---
         val vs = fs?.getConfigurationSection("vegetation")
         val plants = vs?.getMapList("plants")?.mapNotNull { map ->
             val block  = parseMaterialOrNull(map["block"]?.toString()) ?: return@mapNotNull null
@@ -102,12 +82,8 @@ object BiomeLoader {
             val max    = (map["max-per-chunk"] as? Number)?.toInt() ?: 16
             PlantEntry(block, chance, max)
         } ?: emptyList()
-        val vegetation = VegetationSettings(
-            enabled = vs?.getBoolean("enabled", true) ?: true,
-            plants  = plants
-        )
+        val vegetation = VegetationSettings(enabled = vs?.getBoolean("enabled", true) ?: true, plants = plants)
 
-        // --- 鉱石 ---
         val os = fs?.getConfigurationSection("ores")
         val veins = os?.getMapList("veins")?.mapNotNull { map ->
             val block    = parseMaterialOrNull(map["block"]?.toString()) ?: return@mapNotNull null
@@ -117,18 +93,13 @@ object BiomeLoader {
             val chance   = (map["chance"] as? Number)?.toDouble() ?: 0.5
             OreVein(block, minH, maxH, veinSize, chance)
         } ?: emptyList()
-        val ores = OreSettings(
-            enabled = os?.getBoolean("enabled", true) ?: true,
-            veins   = veins
-        )
+        val ores = OreSettings(enabled = os?.getBoolean("enabled", true) ?: true, veins = veins)
 
-        // --- 構造物 ---
         val ss = fs?.getConfigurationSection("structures")
         val structures = StructureSettings(
             caves    = ss?.getBoolean("caves", true) ?: true,
             dungeons = ss?.getBoolean("dungeons", false) ?: false
         )
-
         return FeatureSettings(trees, vegetation, ores, structures)
     }
 
@@ -136,19 +107,14 @@ object BiomeLoader {
         fun parseList(key: String): List<SpawnEntry> {
             return cfg.getMapList("spawns.$key").mapNotNull { map ->
                 val entityName = map["entity"]?.toString() ?: return@mapNotNull null
-                val entityType = runCatching { EntityType.valueOf(entityName) }.getOrNull()
-                    ?: return@mapNotNull null
+                val entityType = runCatching { EntityType.valueOf(entityName) }.getOrNull() ?: return@mapNotNull null
                 val min    = (map["min"] as? Number)?.toInt() ?: 1
                 val max    = (map["max"] as? Number)?.toInt() ?: 3
                 val weight = (map["weight"] as? Number)?.toInt() ?: 5
                 SpawnEntry(entityType, min, max, weight)
             }
         }
-        return SpawnSettings(
-            day   = parseList("day"),
-            night = parseList("night"),
-            water = parseList("water")
-        )
+        return SpawnSettings(day = parseList("day"), night = parseList("night"), water = parseList("water"))
     }
 
     private fun parseWeather(cfg: YamlConfiguration): WeatherSettings {
@@ -177,25 +143,13 @@ object BiomeLoader {
         return AmbienceSettings(particles, sounds)
     }
 
-    // ----------------------------------------------------------------
-    // ヘルパー（JVMシグネチャが衝突しないよう関数名を分ける）
-    // ----------------------------------------------------------------
-
     private fun color(s: String) = s.replace("&", "§")
-
-    /** null や不正な名前の場合は default（non-null）を返す */
     private fun parseMaterial(name: String?, default: Material): Material =
         name?.let { runCatching { Material.valueOf(it.uppercase()) }.getOrNull() } ?: default
-
-    /** null や不正な名前の場合は null を返す */
     private fun parseMaterialOrNull(name: String?): Material? =
         name?.let { runCatching { Material.valueOf(it.uppercase()) }.getOrNull() }
-
-    /** null や不正な名前の場合は default（non-null）を返す */
     private inline fun <reified T : Enum<T>> parseEnum(name: String?, default: T): T =
         name?.let { runCatching { enumValueOf<T>(it.uppercase()) }.getOrNull() } ?: default
-
-    /** null や不正な名前の場合は null を返す */
     private inline fun <reified T : Enum<T>> parseEnumOrNull(name: String?): T? =
         name?.let { runCatching { enumValueOf<T>(it.uppercase()) }.getOrNull() }
 }

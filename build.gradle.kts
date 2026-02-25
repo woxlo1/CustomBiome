@@ -16,42 +16,18 @@ repositories {
 }
 
 dependencies {
-    // -------------------------------------------------------
-    // Kotlin stdlib / coroutines
-    //
-    // WoxloiDevAPI が既にサーバーへ Kotlin stdlib と
-    // coroutines を提供している。
-    // CustomBiome 側で implementation（JAR 同梱）にすると
-    // 異なるクラスローダー上に同じクラスが2つ乗り、
-    //   - ClassCastException
-    //   - NoSuchMethodError
-    // などの実行時競合が発生する。
-    // compileOnly にしてコンパイル参照のみにし、
-    // 実行時は WoxloiDevAPI が提供するものを使う。
-    // -------------------------------------------------------
-    compileOnly(kotlin("stdlib"))
-    compileOnly("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    implementation(kotlin("stdlib"))
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
 
-    // -------------------------------------------------------
-    // Minecraft API
-    // -------------------------------------------------------
     compileOnly("io.papermc.paper:paper-api:1.20.4-R0.1-SNAPSHOT")
 
-    // -------------------------------------------------------
-    // WoxloiDevAPI（libs/WoxloiDevAPI.jar を配置すること）
-    // Kotlin / coroutines はこちらが提供するため重複しない。
-    // -------------------------------------------------------
-    compileOnly(files("libs/WoxloiDevAPI.jar"))
+    // HikariCP + MySQL Connector（MySQLProvider の代替）
+    implementation("com.zaxxer:HikariCP:5.1.0")
+    implementation("com.mysql:mysql-connector-j:8.3.0")
 
-    // -------------------------------------------------------
-    // WorldEdit / WorldGuard
-    // -------------------------------------------------------
     compileOnly("com.sk89q.worldedit:worldedit-bukkit:7.3.0")
     compileOnly("com.sk89q.worldguard:worldguard-bukkit:7.0.9")
 
-    // -------------------------------------------------------
-    // Vault / PlaceholderAPI（softdepend）
-    // -------------------------------------------------------
     compileOnly("com.github.MilkBowl:VaultAPI:1.7.1")
     compileOnly("me.clip:placeholderapi:2.11.5")
 }
@@ -60,13 +36,6 @@ kotlin {
     jvmToolchain(17)
 }
 
-// -------------------------------------------------------
-// Shadow JAR
-//
-// 全依存が compileOnly のため Shadow JAR の中身は
-// CustomBiome 自身のクラスのみになる（軽量 JAR）。
-// relocate も不要（同梱するサードパーティがないため）。
-// -------------------------------------------------------
 tasks.shadowJar {
     archiveBaseName.set("CustomBiome")
     archiveClassifier.set("")
@@ -77,6 +46,10 @@ tasks.shadowJar {
     exclude("META-INF/*.RSA")
     exclude("META-INF/NOTICE*")
     exclude("META-INF/LICENSE*")
+    exclude("META-INF/DEPENDENCIES")
+
+    relocate("com.zaxxer.hikari", "com.woxloi.custombiome.libs.hikari")
+    relocate("com.mysql",         "com.woxloi.custombiome.libs.mysql")
 }
 
 tasks.build {

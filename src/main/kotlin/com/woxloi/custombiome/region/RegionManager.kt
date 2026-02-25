@@ -1,24 +1,26 @@
 package com.woxloi.custombiome.region
 
+import com.sk89q.worldedit.WorldEdit
+import com.sk89q.worldedit.bukkit.BukkitAdapter
 import com.sk89q.worldedit.math.BlockVector3
+import com.sk89q.worldedit.regions.CuboidRegion
+import com.sk89q.worldguard.WorldGuard
 import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion
 import com.woxloi.custombiome.api.BiomeRegistry
 import com.woxloi.custombiome.biome.CustomBiome
 import com.woxloi.custombiome.database.BiomeDatabase
 import com.woxloi.custombiome.utils.Logger
-import com.woxloi.devapi.hooks.world.WorldEditAPI
-import com.woxloi.devapi.hooks.world.WorldGuardAPI
+import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.entity.Player
 import java.util.concurrent.ConcurrentHashMap
 
 /**
  * WorldGuard リージョンとカスタムバイオームの紐付けを管理する。
- * WoxloiDevAPI の WorldGuardAPI / WorldEditAPI フックを活用する。
+ * WoxloiDevAPI の WorldGuardAPI / WorldEditAPI を使わず直接 WE/WG API を呼ぶ。
  */
 object RegionManager {
 
-    /** regionId → BiomeRegion のメモリキャッシュ */
     private val regions = ConcurrentHashMap<String, BiomeRegion>()
 
     private lateinit var database: BiomeDatabase
@@ -26,38 +28,40 @@ object RegionManager {
     private var regionPrefix: String = "cb_"
 
     fun init(db: BiomeDatabase, autoCreate: Boolean, prefix: String) {
-        database     = db
+        database         = db
         autoCreateRegion = autoCreate
-        regionPrefix = prefix
+        regionPrefix     = prefix
         loadFromDatabase()
     }
 
     // ----------------------------------------------------------------
-    // プレイヤーの WorldEdit 選択範囲にバイオームを割り当て
+    // WorldEdit 選択範囲にバイオームを割り当て
     // ----------------------------------------------------------------
 
-    /**
-     * プレイヤーの WorldEdit 選択をもとに WG リージョンを作成（または既存を使用）し、
-     * バイオームを割り当てる。
-     * @return 成功したら true
-     */
     fun assignBiomeToSelection(player: Player, biome: CustomBiome): Boolean {
-        val selection = WorldEditAPI.getSelection(player)
+        val wePlayer  = BukkitAdapter.adapt(player)
+        val session   = WorldEdit.getInstance().sessionManager.get(wePlayer)
+        val selection = session.selectionWorld?.let {
+            runCatching { session.getSelection(it) }.getOrNull()
+        }
+
         if (selection == null) {
             Logger.warn("${player.name} has no WorldEdit selection.")
             return false
         }
 
-        val world      = player.world
-        val regionId   = "$regionPrefix${biome.key}_${System.currentTimeMillis() % 10000}"
-        val wgManager  = WorldGuardAPI.getRegionManager(world) ?: run {
+        val world     = player.world
+        val regionId  = "$regionPrefix${biome.key}_${System.currentTimeMillis() % 10000}"
+        val container = WorldGuard.getInstance().platform.regionContainer
+        val wgManager = container.get(BukkitAdapter.adapt(world))
+
+        if (wgManager == null) {
             Logger.error("WorldGuard RegionManager is unavailable for world '${world.name}'.")
             return false
         }
 
-        // WG リージョン作成
-        val min = selection.minimumPoint
-        val max = selection.maximumPoint
+        val min    = selection.minimumPoint
+        val max    = selection.maximumPoint
         val region = ProtectedCuboidRegion(
             regionId,
             BlockVector3.at(min.blockX, min.blockY, min.blockZ),
@@ -65,7 +69,6 @@ object RegionManager {
         )
         wgManager.addRegion(region)
 
-        // メモリ・DB に保存
         val biomeRegion = BiomeRegion(
             regionId   = regionId,
             worldName  = world.name,
@@ -79,17 +82,16 @@ object RegionManager {
         return true
     }
 
-    /**
-     * 既存の WG リージョン ID にバイオームを割り当てる。
-     */
     fun assignBiomeToRegion(
         regionId: String,
         worldName: String,
         biome: CustomBiome,
         assignedBy: String
     ): Boolean {
-        val world     = org.bukkit.Bukkit.getWorld(worldName) ?: return false
-        val wgManager = WorldGuardAPI.getRegionManager(world) ?: return false
+        val world     = Bukkit.getWorld(worldName) ?: return false
+        val container = WorldGuard.getInstance().platform.regionContainer
+        val wgManager = container.get(BukkitAdapter.adapt(world)) ?: return false
+
         if (wgManager.getRegion(regionId) == null) {
             Logger.warn("WG region '$regionId' does not exist in world '$worldName'.")
             return false
@@ -106,10 +108,15 @@ object RegionManager {
     // 取得
     // ----------------------------------------------------------------
 
-    /** 指定座標のバイオームを返す（WG リージョンから逆引き） */
     fun getBiomeAt(location: Location): CustomBiome? {
-        val wgRegions = WorldGuardAPI.getRegionsAt(location)
-        for (wgRegion in wgRegions) {
+        val world     = location.world ?: return null
+        val container = WorldGuard.getInstance().platform.regionContainer
+        val wgManager = container.get(BukkitAdapter.adapt(world)) ?: return null
+
+        val pos       = BlockVector3.at(location.blockX, location.blockY, location.blockZ)
+        val applicable = wgManager.getApplicableRegions(pos)
+
+        for (wgRegion in applicable) {
             val biomeRegion = regions[wgRegion.id] ?: continue
             return biomeRegion.biome
         }
@@ -130,13 +137,12 @@ object RegionManager {
     fun removeRegion(regionId: String, removeFromWG: Boolean = false): Boolean {
         val biomeRegion = regions.remove(regionId) ?: return false
         database.deleteRegion(regionId)
-
         if (removeFromWG) {
-            val world     = org.bukkit.Bukkit.getWorld(biomeRegion.worldName) ?: return true
-            val wgManager = WorldGuardAPI.getRegionManager(world) ?: return true
+            val world     = Bukkit.getWorld(biomeRegion.worldName) ?: return true
+            val container = WorldGuard.getInstance().platform.regionContainer
+            val wgManager = container.get(BukkitAdapter.adapt(world)) ?: return true
             wgManager.removeRegion(regionId)
         }
-
         Logger.info("Removed biome region '$regionId'.")
         return true
     }
@@ -149,13 +155,12 @@ object RegionManager {
         val records = database.loadAllRegions()
         var count = 0
         for (record in records) {
-            val regionId  = record["region_id"]  as? String ?: continue
-            val worldName = record["world_name"] as? String ?: continue
-            val biomeKey  = record["biome_key"]  as? String ?: continue
+            val regionId   = record["region_id"]   as? String ?: continue
+            val worldName  = record["world_name"]  as? String ?: continue
+            val biomeKey   = record["biome_key"]   as? String ?: continue
             val assignedBy = record["assigned_by"] as? String ?: "unknown"
             val assignedAt = (record["assigned_at"] as? Number)?.toLong() ?: 0L
-
-            val biome = BiomeRegistry.get(biomeKey) ?: continue
+            val biome      = BiomeRegistry.get(biomeKey) ?: continue
 
             regions[regionId] = BiomeRegion(regionId, worldName, biome, assignedBy, assignedAt)
             count++

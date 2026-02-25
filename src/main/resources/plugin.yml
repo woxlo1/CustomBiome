@@ -1,14 +1,13 @@
 name: CustomBiome
 main: com.woxloi.custombiome.CustomBiomePlugin
-version: 1.0.0
+version: ${version}
 api-version: "1.20"
 author: woxloi
 description: >-
-  カスタムバイオームを YAML で定義・管理できる WoxloiDevAPI 対応プラグイン。
+  カスタムバイオームを YAML で定義・管理できるプラグイン。
   WorldEdit / WorldGuard 連携・MySQL 永続化をサポート。
 
 depend:
-  - WoxloiDevAPI
   - WorldEdit
   - WorldGuard
 
@@ -23,6 +22,7 @@ commands:
     description: CustomBiome メインコマンド
     usage: /<command> <subcommand> [args]
     permission: custombiome.use
+    aliases: [cb, custombiome]
 
 permissions:
   custombiome.use:

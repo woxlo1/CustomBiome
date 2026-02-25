@@ -3,15 +3,13 @@ package com.woxloi.custombiome
 import com.woxloi.custombiome.api.BiomeRegistry
 import com.woxloi.custombiome.command.CbiomeCommand
 import com.woxloi.custombiome.database.BiomeDatabase
+import com.woxloi.custombiome.database.MySQLProvider
 import com.woxloi.custombiome.listener.PlayerListener
 import com.woxloi.custombiome.listener.WorldListener
 import com.woxloi.custombiome.region.RegionManager
 import com.woxloi.custombiome.utils.Logger
 import com.woxloi.custombiome.utils.Msg
 import com.woxloi.custombiome.world.WorldManager
-import com.woxloi.devapi.command.CommandRegistry
-import com.woxloi.devapi.database.sql.MySQLProvider
-import com.woxloi.devapi.hooks.HookManager
 import org.bukkit.plugin.java.JavaPlugin
 import java.io.File
 
@@ -24,10 +22,6 @@ class CustomBiomePlugin : JavaPlugin() {
 
     private lateinit var database: BiomeDatabase
 
-    // ----------------------------------------------------------------
-    // ライフサイクル
-    // ----------------------------------------------------------------
-
     override fun onLoad() {
         instance = this
         Logger.info("CustomBiome is loading...")
@@ -35,17 +29,14 @@ class CustomBiomePlugin : JavaPlugin() {
 
     override fun onEnable() {
         try {
-            // 設定ファイル
             saveDefaultConfig()
             reloadConfig()
             copyDefaultBiomes()
 
-            // メッセージプレフィックスを config から初期化
             Msg.init(config.getString("settings.prefix", "§e[§b§lCustomBiome§e] §r")!!)
 
-            // WoxloiDevAPI フック確認（WorldEdit / WorldGuard はここで検証）
-            HookManager.initialize()
-            checkRequiredHooks()
+            // WorldEdit / WorldGuard が存在するか確認
+            checkRequiredPlugins()
 
             // MySQL 初期化
             database = setupDatabase()
@@ -62,18 +53,22 @@ class CustomBiomePlugin : JavaPlugin() {
 
             // RegionManager 初期化
             RegionManager.init(
-                db          = database,
-                autoCreate  = config.getBoolean("worldguard.auto-create-region", true),
-                prefix      = config.getString("worldguard.region-prefix", "cb_")!!
+                db         = database,
+                autoCreate = config.getBoolean("worldguard.auto-create-region", true),
+                prefix     = config.getString("worldguard.region-prefix", "cb_")!!
             )
 
-            // コマンド登録
-            val root = CbiomeCommand.createRoot()
-            CommandRegistry.registerRoot(root, listOf("cbiome"))
+            // コマンド登録（標準 Bukkit CommandExecutor）
+            val cmd = CbiomeCommand()
+            getCommand("cbiome")?.apply {
+                setExecutor(cmd)
+                tabCompleter = cmd
+            }
 
             // イベントリスナー登録
             server.pluginManager.registerEvents(PlayerListener(database), this)
             server.pluginManager.registerEvents(WorldListener(), this)
+            server.pluginManager.registerEvents(com.woxloi.custombiome.ui.GuiListener(), this)
 
             Logger.success("CustomBiome has been fully enabled! (biomes: ${BiomeRegistry.count()})")
 
@@ -86,12 +81,9 @@ class CustomBiomePlugin : JavaPlugin() {
 
     override fun onDisable() {
         Logger.warn("CustomBiome is disabling...")
+        database.close()
         Logger.info("CustomBiome disabled.")
     }
-
-    // ----------------------------------------------------------------
-    // リロード（/cbiome reload から呼ばれる）
-    // ----------------------------------------------------------------
 
     fun reloadPlugin() {
         reloadConfig()
@@ -102,16 +94,10 @@ class CustomBiomePlugin : JavaPlugin() {
         Logger.info("CustomBiome reloaded. Biomes: ${BiomeRegistry.count()}")
     }
 
-    // ----------------------------------------------------------------
-    // 内部セットアップ
-    // ----------------------------------------------------------------
-
-    /** デフォルトバイオームYAMLをデータフォルダにコピー */
     private fun copyDefaultBiomes() {
         val biomesDir = File(dataFolder, "biomes")
         if (!biomesDir.exists()) {
             biomesDir.mkdirs()
-            // JAR 内の biomes/ をコピー
             listOf("magic_forest.yml", "ancient_desert.yml").forEach { name ->
                 runCatching { saveResource("biomes/$name", false) }
                     .onFailure { Logger.warn("Could not copy default biome: $name") }
@@ -119,36 +105,31 @@ class CustomBiomePlugin : JavaPlugin() {
         }
     }
 
-    /** MySQL プロバイダを作成して BiomeDatabase を初期化する */
     private fun setupDatabase(): BiomeDatabase {
         val cfg = config.getConfigurationSection("database")!!
         val provider = MySQLProvider(
-            host      = cfg.getString("host", "localhost")!!,
-            port      = cfg.getInt("port", 3306),
-            database  = cfg.getString("name", "custombiome")!!,
-            username  = cfg.getString("username", "root")!!,
-            password  = cfg.getString("password", "")!!,
-            useSSL    = cfg.getBoolean("useSSL", false)
+            host     = cfg.getString("host", "localhost")!!,
+            port     = cfg.getInt("port", 3306),
+            database = cfg.getString("name", "custombiome")!!,
+            username = cfg.getString("username", "root")!!,
+            password = cfg.getString("password", "")!!,
+            useSSL   = cfg.getBoolean("useSSL", false),
+            poolSize = cfg.getInt("pool-size", 10)
         )
-        val connected = provider.connect()
-        if (!connected) {
-            Logger.error("MySQL connection failed! Check database settings in config.yml.")
-            throw IllegalStateException("MySQL connection failed.")
+        if (!provider.connect()) {
+            throw IllegalStateException("MySQL connection failed. Check config.yml database settings.")
         }
         Logger.success("MySQL connected for CustomBiome.")
         return BiomeDatabase(provider).also { it.init() }
     }
 
-    /** WorldEdit / WorldGuard が存在するか確認する */
-    private fun checkRequiredHooks() {
-        if (!HookManager.isHooked("WorldEdit")) {
-            Logger.error("WorldEdit が見つかりません！プラグインを導入してください。")
-            throw IllegalStateException("WorldEdit is required.")
+    private fun checkRequiredPlugins() {
+        if (server.pluginManager.getPlugin("WorldEdit") == null) {
+            throw IllegalStateException("WorldEdit が見つかりません。プラグインを導入してください。")
         }
-        if (!HookManager.isHooked("WorldGuard")) {
-            Logger.error("WorldGuard が見つかりません！プラグインを導入してください。")
-            throw IllegalStateException("WorldGuard is required.")
+        if (server.pluginManager.getPlugin("WorldGuard") == null) {
+            throw IllegalStateException("WorldGuard が見つかりません。プラグインを導入してください。")
         }
-        Logger.success("WorldEdit / WorldGuard フックに成功しました。")
+        Logger.success("WorldEdit / WorldGuard を確認しました。")
     }
 }

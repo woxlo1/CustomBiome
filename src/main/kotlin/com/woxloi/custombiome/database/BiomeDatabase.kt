@@ -2,13 +2,11 @@ package com.woxloi.custombiome.database
 
 import com.woxloi.custombiome.utils.Logger
 import com.woxloi.custombiome.world.CustomWorld
-import com.woxloi.devapi.database.DatabaseRegistry
-import com.woxloi.devapi.database.DatabaseTable
-import com.woxloi.devapi.database.sql.MySQLProvider
 
 /**
  * CustomBiome の MySQL 永続化レイヤー。
- * WoxloiDevAPI の DatabaseRegistry / DatabaseTable を使ってクエリを実行する。
+ * WoxloiDevAPI の DatabaseRegistry / DatabaseTable を使わず
+ * JDBC を直接使う自前実装。
  *
  * テーブル:
  *   cb_worlds   … 生成ワールド情報
@@ -17,45 +15,51 @@ import com.woxloi.devapi.database.sql.MySQLProvider
  */
 class BiomeDatabase(private val provider: MySQLProvider) {
 
-    private lateinit var worldTable:  DatabaseTable
-    private lateinit var visitTable:  DatabaseTable
-    private lateinit var regionTable: DatabaseTable
-
     fun init() {
-        worldTable  = DatabaseRegistry.registerTable("cb_worlds",  provider)
-        visitTable  = DatabaseRegistry.registerTable("cb_visits",  provider)
-        regionTable = DatabaseRegistry.registerTable("cb_regions", provider)
-
         createTables()
         Logger.success("BiomeDatabase tables ready.")
     }
 
+    fun close() {
+        provider.close()
+    }
+
     private fun createTables() {
-        worldTable.create(mapOf(
-            "id"         to "INT AUTO_INCREMENT PRIMARY KEY",
-            "world_name" to "VARCHAR(64) NOT NULL UNIQUE",
-            "biome_key"  to "VARCHAR(64) NOT NULL",
-            "seed"       to "BIGINT NOT NULL",
-            "created_by" to "VARCHAR(36) NOT NULL",
-            "created_at" to "BIGINT NOT NULL"
-        ))
+        provider.getConnection().use { conn ->
+            conn.createStatement().use { stmt ->
+                stmt.executeUpdate("""
+                    CREATE TABLE IF NOT EXISTS cb_worlds (
+                        id          INT AUTO_INCREMENT PRIMARY KEY,
+                        world_name  VARCHAR(64) NOT NULL UNIQUE,
+                        biome_key   VARCHAR(64) NOT NULL,
+                        seed        BIGINT NOT NULL,
+                        created_by  VARCHAR(36) NOT NULL,
+                        created_at  BIGINT NOT NULL
+                    ) CHARACTER SET utf8mb4
+                """.trimIndent())
 
-        visitTable.create(mapOf(
-            "id"         to "INT AUTO_INCREMENT PRIMARY KEY",
-            "uuid"       to "VARCHAR(36) NOT NULL",
-            "biome_key"  to "VARCHAR(64) NOT NULL",
-            "world_name" to "VARCHAR(64) NOT NULL",
-            "visited_at" to "BIGINT NOT NULL"
-        ))
+                stmt.executeUpdate("""
+                    CREATE TABLE IF NOT EXISTS cb_visits (
+                        id          INT AUTO_INCREMENT PRIMARY KEY,
+                        uuid        VARCHAR(36) NOT NULL,
+                        biome_key   VARCHAR(64) NOT NULL,
+                        world_name  VARCHAR(64) NOT NULL,
+                        visited_at  BIGINT NOT NULL
+                    ) CHARACTER SET utf8mb4
+                """.trimIndent())
 
-        regionTable.create(mapOf(
-            "id"          to "INT AUTO_INCREMENT PRIMARY KEY",
-            "region_id"   to "VARCHAR(128) NOT NULL UNIQUE",
-            "world_name"  to "VARCHAR(64) NOT NULL",
-            "biome_key"   to "VARCHAR(64) NOT NULL",
-            "assigned_by" to "VARCHAR(36) NOT NULL",
-            "assigned_at" to "BIGINT NOT NULL"
-        ))
+                stmt.executeUpdate("""
+                    CREATE TABLE IF NOT EXISTS cb_regions (
+                        id          INT AUTO_INCREMENT PRIMARY KEY,
+                        region_id   VARCHAR(128) NOT NULL UNIQUE,
+                        world_name  VARCHAR(64) NOT NULL,
+                        biome_key   VARCHAR(64) NOT NULL,
+                        assigned_by VARCHAR(36) NOT NULL,
+                        assigned_at BIGINT NOT NULL
+                    ) CHARACTER SET utf8mb4
+                """.trimIndent())
+            }
+        }
     }
 
     // ----------------------------------------------------------------
@@ -64,23 +68,52 @@ class BiomeDatabase(private val provider: MySQLProvider) {
 
     fun saveWorld(world: CustomWorld) {
         runCatching {
-            worldTable.insert(world.toDbMap())
-        }.onFailure {
-            Logger.error("Failed to save world '${world.worldName}': ${it.message}")
-        }
+            provider.getConnection().use { conn ->
+                conn.prepareStatement("""
+                    INSERT INTO cb_worlds (world_name, biome_key, seed, created_by, created_at)
+                    VALUES (?, ?, ?, ?, ?)
+                    ON DUPLICATE KEY UPDATE biome_key=VALUES(biome_key), seed=VALUES(seed)
+                """.trimIndent()).use { ps ->
+                    ps.setString(1, world.worldName)
+                    ps.setString(2, world.biome.key)
+                    ps.setLong(3, world.seed)
+                    ps.setString(4, world.createdBy)
+                    ps.setLong(5, world.createdAt)
+                    ps.executeUpdate()
+                }
+            }
+        }.onFailure { Logger.error("Failed to save world '${world.worldName}': ${it.message}") }
     }
 
     fun deleteWorld(worldName: String) {
         runCatching {
-            worldTable.delete("world_name", worldName)
-        }.onFailure {
-            Logger.error("Failed to delete world '$worldName': ${it.message}")
-        }
+            provider.getConnection().use { conn ->
+                conn.prepareStatement("DELETE FROM cb_worlds WHERE world_name = ?").use { ps ->
+                    ps.setString(1, worldName)
+                    ps.executeUpdate()
+                }
+            }
+        }.onFailure { Logger.error("Failed to delete world '$worldName': ${it.message}") }
     }
 
     fun loadAllWorlds(): List<Map<String, Any>> {
         return runCatching {
-            worldTable.findAll()
+            provider.getConnection().use { conn ->
+                conn.createStatement().use { stmt ->
+                    val rs = stmt.executeQuery("SELECT * FROM cb_worlds")
+                    val result = mutableListOf<Map<String, Any>>()
+                    while (rs.next()) {
+                        result += mapOf(
+                            "world_name"  to rs.getString("world_name"),
+                            "biome_key"   to rs.getString("biome_key"),
+                            "seed"        to rs.getLong("seed"),
+                            "created_by"  to rs.getString("created_by"),
+                            "created_at"  to rs.getLong("created_at")
+                        )
+                    }
+                    result
+                }
+            }
         }.getOrElse {
             Logger.error("Failed to load worlds: ${it.message}")
             emptyList()
@@ -93,20 +126,38 @@ class BiomeDatabase(private val provider: MySQLProvider) {
 
     fun recordVisit(uuid: String, biomeKey: String, worldName: String) {
         runCatching {
-            visitTable.insert(mapOf(
-                "uuid"       to uuid,
-                "biome_key"  to biomeKey,
-                "world_name" to worldName,
-                "visited_at" to System.currentTimeMillis() / 1000L
-            ))
-        }.onFailure {
-            Logger.error("Failed to record visit: ${it.message}")
-        }
+            provider.getConnection().use { conn ->
+                conn.prepareStatement(
+                    "INSERT INTO cb_visits (uuid, biome_key, world_name, visited_at) VALUES (?, ?, ?, ?)"
+                ).use { ps ->
+                    ps.setString(1, uuid)
+                    ps.setString(2, biomeKey)
+                    ps.setString(3, worldName)
+                    ps.setLong(4, System.currentTimeMillis() / 1000L)
+                    ps.executeUpdate()
+                }
+            }
+        }.onFailure { Logger.error("Failed to record visit: ${it.message}") }
     }
 
     fun getVisitHistory(uuid: String): List<Map<String, Any>> {
         return runCatching {
-            visitTable.find("uuid", uuid)?.let { listOf(it) } ?: emptyList()
+            provider.getConnection().use { conn ->
+                conn.prepareStatement("SELECT * FROM cb_visits WHERE uuid = ? ORDER BY visited_at DESC").use { ps ->
+                    ps.setString(1, uuid)
+                    val rs = ps.executeQuery()
+                    val result = mutableListOf<Map<String, Any>>()
+                    while (rs.next()) {
+                        result += mapOf(
+                            "uuid"       to rs.getString("uuid"),
+                            "biome_key"  to rs.getString("biome_key"),
+                            "world_name" to rs.getString("world_name"),
+                            "visited_at" to rs.getLong("visited_at")
+                        )
+                    }
+                    result
+                }
+            }
         }.getOrElse { emptyList() }
     }
 
@@ -116,29 +167,52 @@ class BiomeDatabase(private val provider: MySQLProvider) {
 
     fun saveRegion(regionId: String, worldName: String, biomeKey: String, assignedBy: String) {
         runCatching {
-            regionTable.insert(mapOf(
-                "region_id"   to regionId,
-                "world_name"  to worldName,
-                "biome_key"   to biomeKey,
-                "assigned_by" to assignedBy,
-                "assigned_at" to System.currentTimeMillis() / 1000L
-            ))
-        }.onFailure {
-            Logger.error("Failed to save region '$regionId': ${it.message}")
-        }
+            provider.getConnection().use { conn ->
+                conn.prepareStatement("""
+                    INSERT INTO cb_regions (region_id, world_name, biome_key, assigned_by, assigned_at)
+                    VALUES (?, ?, ?, ?, ?)
+                    ON DUPLICATE KEY UPDATE biome_key=VALUES(biome_key), assigned_by=VALUES(assigned_by)
+                """.trimIndent()).use { ps ->
+                    ps.setString(1, regionId)
+                    ps.setString(2, worldName)
+                    ps.setString(3, biomeKey)
+                    ps.setString(4, assignedBy)
+                    ps.setLong(5, System.currentTimeMillis() / 1000L)
+                    ps.executeUpdate()
+                }
+            }
+        }.onFailure { Logger.error("Failed to save region '$regionId': ${it.message}") }
     }
 
     fun deleteRegion(regionId: String) {
         runCatching {
-            regionTable.delete("region_id", regionId)
-        }.onFailure {
-            Logger.error("Failed to delete region '$regionId': ${it.message}")
-        }
+            provider.getConnection().use { conn ->
+                conn.prepareStatement("DELETE FROM cb_regions WHERE region_id = ?").use { ps ->
+                    ps.setString(1, regionId)
+                    ps.executeUpdate()
+                }
+            }
+        }.onFailure { Logger.error("Failed to delete region '$regionId': ${it.message}") }
     }
 
     fun loadAllRegions(): List<Map<String, Any>> {
         return runCatching {
-            regionTable.findAll()
+            provider.getConnection().use { conn ->
+                conn.createStatement().use { stmt ->
+                    val rs = stmt.executeQuery("SELECT * FROM cb_regions")
+                    val result = mutableListOf<Map<String, Any>>()
+                    while (rs.next()) {
+                        result += mapOf(
+                            "region_id"   to rs.getString("region_id"),
+                            "world_name"  to rs.getString("world_name"),
+                            "biome_key"   to rs.getString("biome_key"),
+                            "assigned_by" to rs.getString("assigned_by"),
+                            "assigned_at" to rs.getLong("assigned_at")
+                        )
+                    }
+                    result
+                }
+            }
         }.getOrElse { emptyList() }
     }
 }
