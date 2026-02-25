@@ -4,6 +4,8 @@ import com.woxloi.custombiome.CustomBiomePlugin
 import com.woxloi.custombiome.generator.FeaturePlacer
 import com.woxloi.custombiome.utils.Logger
 import com.woxloi.custombiome.world.WorldManager
+import org.bukkit.Bukkit
+import org.bukkit.Chunk
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
@@ -11,38 +13,36 @@ import org.bukkit.event.world.ChunkLoadEvent
 import org.bukkit.event.world.WorldLoadEvent
 import org.bukkit.event.world.WorldUnloadEvent
 
-/**
- * チャンク・ワールドのロードイベントを処理する。
- * WoxloiDevAPI の TaskScheduler を Bukkit スケジューラに置き換え済み。
- */
 class WorldListener : Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     fun onChunkLoad(event: ChunkLoadEvent) {
         if (!event.isNewChunk) return
 
-        val chunk       = event.chunk
-        val worldName   = chunk.world.name
+        val chunk = event.chunk
+        val world = chunk.world
+        val worldName = world.name
         val customWorld = WorldManager.getCustomWorld(worldName) ?: return
-        val generator   = customWorld.generator ?: return
+        val generator = customWorld.generator ?: return
 
-        val heightMap = Array(16) { x ->
-            IntArray(16) { z ->
-                generator.getHeightAt(chunk.x * 16 + x, chunk.z * 16 + z)
-            }
-        }
-
-        CustomBiomePlugin.instance.server.scheduler.runTask(
-            CustomBiomePlugin.instance,
-            Runnable {
-                try {
-                    FeaturePlacer.populate(chunk, customWorld.biome, heightMap, customWorld.seed)
-                } catch (e: Exception) {
-                    Logger.error("FeaturePlacer error at chunk (${chunk.x}, ${chunk.z}): ${e.message}")
-                    e.printStackTrace()
+        // 非同期でチャンクを完全に読み込む
+        world.getChunkAtAsync(chunk.x, chunk.z).thenAcceptAsync { loadedChunk ->
+            val heightMap = Array(16) { x ->
+                IntArray(16) { z ->
+                    generator.getHeightAt(loadedChunk.x * 16 + x, loadedChunk.z * 16 + z)
                 }
             }
-        )
+
+            // ブロック操作は同期タスクで実行
+            Bukkit.getScheduler().runTask(CustomBiomePlugin.instance, Runnable {
+                try {
+                    FeaturePlacer.populate(loadedChunk, customWorld.biome, heightMap, customWorld.seed)
+                } catch (e: Exception) {
+                    Logger.error("FeaturePlacer error at chunk (${loadedChunk.x}, ${loadedChunk.z}): ${e.message}")
+                    e.printStackTrace()
+                }
+            })
+        }
     }
 
     @EventHandler
