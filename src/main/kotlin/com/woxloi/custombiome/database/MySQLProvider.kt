@@ -4,10 +4,6 @@ import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import java.sql.Connection
 
-/**
- * HikariCP ベースの MySQL 接続プロバイダ。
- * WoxloiDevAPI の MySQLProvider を置き換える自前実装。
- */
 class MySQLProvider(
     private val host: String,
     private val port: Int,
@@ -37,7 +33,6 @@ class MySQLProvider(
                 addDataSourceProperty("prepStmtCacheSqlLimit", "2048")
             }
             dataSource = HikariDataSource(config)
-            // 接続テスト
             dataSource!!.connection.use { true }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -48,7 +43,5 @@ class MySQLProvider(
     fun getConnection(): Connection =
         dataSource?.connection ?: throw IllegalStateException("Database is not connected.")
 
-    fun close() {
-        dataSource?.close()
-    }
+    fun close() { dataSource?.close() }
 }

@@ -19,8 +19,7 @@ class SimplexNoise(seed: Long = 0L) {
         val F2 = 0.5 * (Math.sqrt(3.0) - 1.0)
         val G2 = (3.0 - Math.sqrt(3.0)) / 6.0
         val s = (xin + yin) * F2
-        val i = fastFloor(xin + s)
-        val j = fastFloor(yin + s)
+        val i = fastFloor(xin + s); val j = fastFloor(yin + s)
         val t = (i + j) * G2
         val x0 = xin - (i - t); val y0 = yin - (j - t)
         val i1: Int; val j1: Int

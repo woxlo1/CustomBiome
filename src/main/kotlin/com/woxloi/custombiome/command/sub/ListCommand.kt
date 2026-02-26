@@ -17,9 +17,7 @@ object ListCommand {
                 Msg.send(sender, "&cバイオームが登録されていません。")
             } else {
                 Msg.send(sender, "&e登録済みバイオーム一覧 (${biomes.size} 件):")
-                biomes.forEach { b ->
-                    Msg.sendRaw(sender, "  &a${b.key} &7- ${b.description}")
-                }
+                biomes.forEach { b -> Msg.sendRaw(sender, "  &a${b.key} &7- ${b.description}") }
             }
         }
     }

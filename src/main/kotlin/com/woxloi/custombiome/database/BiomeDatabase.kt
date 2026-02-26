@@ -3,26 +3,10 @@ package com.woxloi.custombiome.database
 import com.woxloi.custombiome.utils.Logger
 import com.woxloi.custombiome.world.CustomWorld
 
-/**
- * CustomBiome の MySQL 永続化レイヤー。
- * WoxloiDevAPI の DatabaseRegistry / DatabaseTable を使わず
- * JDBC を直接使う自前実装。
- *
- * テーブル:
- *   cb_worlds   … 生成ワールド情報
- *   cb_visits   … プレイヤーのバイオーム訪問履歴
- *   cb_regions  … WG リージョン割り当て情報
- */
 class BiomeDatabase(private val provider: MySQLProvider) {
 
-    fun init() {
-        createTables()
-        Logger.success("BiomeDatabase tables ready.")
-    }
-
-    fun close() {
-        provider.close()
-    }
+    fun init() { createTables(); Logger.success("BiomeDatabase tables ready.") }
+    fun close() { provider.close() }
 
     private fun createTables() {
         provider.getConnection().use { conn ->
@@ -37,7 +21,6 @@ class BiomeDatabase(private val provider: MySQLProvider) {
                         created_at  BIGINT NOT NULL
                     ) CHARACTER SET utf8mb4
                 """.trimIndent())
-
                 stmt.executeUpdate("""
                     CREATE TABLE IF NOT EXISTS cb_visits (
                         id          INT AUTO_INCREMENT PRIMARY KEY,
@@ -47,7 +30,6 @@ class BiomeDatabase(private val provider: MySQLProvider) {
                         visited_at  BIGINT NOT NULL
                     ) CHARACTER SET utf8mb4
                 """.trimIndent())
-
                 stmt.executeUpdate("""
                     CREATE TABLE IF NOT EXISTS cb_regions (
                         id          INT AUTO_INCREMENT PRIMARY KEY,
@@ -62,10 +44,6 @@ class BiomeDatabase(private val provider: MySQLProvider) {
         }
     }
 
-    // ----------------------------------------------------------------
-    // ワールド CRUD
-    // ----------------------------------------------------------------
-
     fun saveWorld(world: CustomWorld) {
         runCatching {
             provider.getConnection().use { conn ->
@@ -74,11 +52,8 @@ class BiomeDatabase(private val provider: MySQLProvider) {
                     VALUES (?, ?, ?, ?, ?)
                     ON DUPLICATE KEY UPDATE biome_key=VALUES(biome_key), seed=VALUES(seed)
                 """.trimIndent()).use { ps ->
-                    ps.setString(1, world.worldName)
-                    ps.setString(2, world.biome.key)
-                    ps.setLong(3, world.seed)
-                    ps.setString(4, world.createdBy)
-                    ps.setLong(5, world.createdAt)
+                    ps.setString(1, world.worldName); ps.setString(2, world.biome.key)
+                    ps.setLong(3, world.seed); ps.setString(4, world.createdBy); ps.setLong(5, world.createdAt)
                     ps.executeUpdate()
                 }
             }
@@ -89,8 +64,7 @@ class BiomeDatabase(private val provider: MySQLProvider) {
         runCatching {
             provider.getConnection().use { conn ->
                 conn.prepareStatement("DELETE FROM cb_worlds WHERE world_name = ?").use { ps ->
-                    ps.setString(1, worldName)
-                    ps.executeUpdate()
+                    ps.setString(1, worldName); ps.executeUpdate()
                 }
             }
         }.onFailure { Logger.error("Failed to delete world '$worldName': ${it.message}") }
@@ -104,25 +78,18 @@ class BiomeDatabase(private val provider: MySQLProvider) {
                     val result = mutableListOf<Map<String, Any>>()
                     while (rs.next()) {
                         result += mapOf(
-                            "world_name"  to rs.getString("world_name"),
-                            "biome_key"   to rs.getString("biome_key"),
-                            "seed"        to rs.getLong("seed"),
-                            "created_by"  to rs.getString("created_by"),
-                            "created_at"  to rs.getLong("created_at")
+                            "world_name" to rs.getString("world_name"),
+                            "biome_key"  to rs.getString("biome_key"),
+                            "seed"       to rs.getLong("seed"),
+                            "created_by" to rs.getString("created_by"),
+                            "created_at" to rs.getLong("created_at")
                         )
                     }
                     result
                 }
             }
-        }.getOrElse {
-            Logger.error("Failed to load worlds: ${it.message}")
-            emptyList()
-        }
+        }.getOrElse { Logger.error("Failed to load worlds: ${it.message}"); emptyList() }
     }
-
-    // ----------------------------------------------------------------
-    // 訪問履歴
-    // ----------------------------------------------------------------
 
     fun recordVisit(uuid: String, biomeKey: String, worldName: String) {
         runCatching {
@@ -130,10 +97,8 @@ class BiomeDatabase(private val provider: MySQLProvider) {
                 conn.prepareStatement(
                     "INSERT INTO cb_visits (uuid, biome_key, world_name, visited_at) VALUES (?, ?, ?, ?)"
                 ).use { ps ->
-                    ps.setString(1, uuid)
-                    ps.setString(2, biomeKey)
-                    ps.setString(3, worldName)
-                    ps.setLong(4, System.currentTimeMillis() / 1000L)
+                    ps.setString(1, uuid); ps.setString(2, biomeKey)
+                    ps.setString(3, worldName); ps.setLong(4, System.currentTimeMillis() / 1000L)
                     ps.executeUpdate()
                 }
             }
@@ -161,10 +126,6 @@ class BiomeDatabase(private val provider: MySQLProvider) {
         }.getOrElse { emptyList() }
     }
 
-    // ----------------------------------------------------------------
-    // リージョン割り当て
-    // ----------------------------------------------------------------
-
     fun saveRegion(regionId: String, worldName: String, biomeKey: String, assignedBy: String) {
         runCatching {
             provider.getConnection().use { conn ->
@@ -173,11 +134,8 @@ class BiomeDatabase(private val provider: MySQLProvider) {
                     VALUES (?, ?, ?, ?, ?)
                     ON DUPLICATE KEY UPDATE biome_key=VALUES(biome_key), assigned_by=VALUES(assigned_by)
                 """.trimIndent()).use { ps ->
-                    ps.setString(1, regionId)
-                    ps.setString(2, worldName)
-                    ps.setString(3, biomeKey)
-                    ps.setString(4, assignedBy)
-                    ps.setLong(5, System.currentTimeMillis() / 1000L)
+                    ps.setString(1, regionId); ps.setString(2, worldName); ps.setString(3, biomeKey)
+                    ps.setString(4, assignedBy); ps.setLong(5, System.currentTimeMillis() / 1000L)
                     ps.executeUpdate()
                 }
             }
@@ -188,8 +146,7 @@ class BiomeDatabase(private val provider: MySQLProvider) {
         runCatching {
             provider.getConnection().use { conn ->
                 conn.prepareStatement("DELETE FROM cb_regions WHERE region_id = ?").use { ps ->
-                    ps.setString(1, regionId)
-                    ps.executeUpdate()
+                    ps.setString(1, regionId); ps.executeUpdate()
                 }
             }
         }.onFailure { Logger.error("Failed to delete region '$regionId': ${it.message}") }

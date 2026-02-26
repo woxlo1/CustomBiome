@@ -10,15 +10,9 @@ object InfoCommand {
 
     fun execute(sender: CommandSender, args: List<String>) {
         val key = args.getOrNull(0)
-        if (key == null) {
-            Msg.send(sender, "&c使い方: /cbiome info <biome_key>")
-            return
-        }
+        if (key == null) { Msg.send(sender, "&c使い方: /cbiome info <biome_key>"); return }
         val biome = BiomeRegistry.get(key)
-        if (biome == null) {
-            Msg.send(sender, "&cバイオーム '&e$key&c' が見つかりません。")
-            return
-        }
+        if (biome == null) { Msg.send(sender, "&cバイオーム '&e$key&c' が見つかりません。"); return }
         if (sender is Player) {
             BiomeMenuDetail.open(sender, biome)
         } else {

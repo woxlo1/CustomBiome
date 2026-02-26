@@ -9,10 +9,7 @@ import org.bukkit.entity.Player
 object TeleportCommand {
 
     fun execute(sender: CommandSender, args: List<String>) {
-        if (sender !is Player) {
-            Msg.send(sender, "&cプレイヤーのみ実行できます。")
-            return
-        }
+        if (sender !is Player) { Msg.send(sender, "&cプレイヤーのみ実行できます。"); return }
         if (!sender.hasPermission("custombiome.tp")) {
             Msg.send(sender, "&cこのコマンドを実行する権限がありません。")
             return
@@ -30,15 +27,9 @@ object TeleportCommand {
             return
         }
         val customWorld = WorldManager.getCustomWorld(worldName)
-        if (customWorld == null) {
-            Msg.send(sender, "&cカスタムワールド '&e$worldName&c' が見つかりません。")
-            return
-        }
+        if (customWorld == null) { Msg.send(sender, "&cカスタムワールド '&e$worldName&c' が見つかりません。"); return }
         val world = Bukkit.getWorld(worldName)
-        if (world == null) {
-            Msg.send(sender, "&cワールド '&e$worldName&c' がロードされていません。")
-            return
-        }
+        if (world == null) { Msg.send(sender, "&cワールド '&e$worldName&c' がロードされていません。"); return }
         sender.teleport(world.spawnLocation)
         Msg.send(sender, "&a${world.name} &7(${customWorld.biome.displayName}&7) &aにテレポートしました！")
     }

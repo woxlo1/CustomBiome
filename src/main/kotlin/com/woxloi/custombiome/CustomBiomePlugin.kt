@@ -5,6 +5,7 @@ import com.woxloi.custombiome.command.CbiomeCommand
 import com.woxloi.custombiome.database.BiomeDatabase
 import com.woxloi.custombiome.database.MySQLProvider
 import com.woxloi.custombiome.listener.PlayerListener
+import com.woxloi.custombiome.listener.WandListener
 import com.woxloi.custombiome.listener.WorldListener
 import com.woxloi.custombiome.region.RegionManager
 import com.woxloi.custombiome.utils.Logger
@@ -35,40 +36,34 @@ class CustomBiomePlugin : JavaPlugin() {
 
             Msg.init(config.getString("settings.prefix", "§e[§b§lCustomBiome§e] §r")!!)
 
-            // WorldEdit / WorldGuard が存在するか確認
             checkRequiredPlugins()
 
-            // MySQL 初期化
             database = setupDatabase()
 
-            // バイオームロード
             val biomesDir = File(dataFolder, config.getString("settings.biomes-dir", "biomes")!!)
             BiomeRegistry.loadFromDirectory(biomesDir)
 
-            // WorldManager 初期化
             WorldManager.init(
                 db     = database,
                 prefix = config.getString("world.prefix", "cb_")!!
             )
 
-            // RegionManager 初期化
             RegionManager.init(
                 db         = database,
                 autoCreate = config.getBoolean("worldguard.auto-create-region", true),
                 prefix     = config.getString("worldguard.region-prefix", "cb_")!!
             )
 
-            // コマンド登録（標準 Bukkit CommandExecutor）
             val cmd = CbiomeCommand()
             getCommand("cbiome")?.apply {
                 setExecutor(cmd)
                 tabCompleter = cmd
             }
 
-            // イベントリスナー登録
             server.pluginManager.registerEvents(PlayerListener(database), this)
             server.pluginManager.registerEvents(WorldListener(), this)
             server.pluginManager.registerEvents(com.woxloi.custombiome.ui.GuiListener(), this)
+            server.pluginManager.registerEvents(WandListener, this)
 
             Logger.success("CustomBiome has been fully enabled! (biomes: ${BiomeRegistry.count()})")
 
@@ -124,12 +119,10 @@ class CustomBiomePlugin : JavaPlugin() {
     }
 
     private fun checkRequiredPlugins() {
-        if (server.pluginManager.getPlugin("WorldEdit") == null) {
+        if (server.pluginManager.getPlugin("WorldEdit") == null)
             throw IllegalStateException("WorldEdit が見つかりません。プラグインを導入してください。")
-        }
-        if (server.pluginManager.getPlugin("WorldGuard") == null) {
+        if (server.pluginManager.getPlugin("WorldGuard") == null)
             throw IllegalStateException("WorldGuard が見つかりません。プラグインを導入してください。")
-        }
         Logger.success("WorldEdit / WorldGuard を確認しました。")
     }
 }

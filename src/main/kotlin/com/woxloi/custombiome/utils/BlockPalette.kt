@@ -6,10 +6,10 @@ import org.bukkit.Material
 
 object BlockPalette {
     fun getBlock(palette: BlockPaletteSettings, y: Int, surfaceY: Int): Material = when {
-        y == surfaceY        -> palette.surface
-        y >= surfaceY - 4    -> palette.subsurface
-        y <= 5               -> palette.bedrockLayer
-        else                 -> palette.deep
+        y == surfaceY     -> palette.surface
+        y >= surfaceY - 4 -> palette.subsurface
+        y <= 5            -> palette.bedrockLayer
+        else              -> palette.deep
     }
     fun isPlaceable(material: Material): Boolean = material.isBlock && !material.name.contains("AIR")
     fun isFluid(material: Material): Boolean = material == Material.WATER || material == Material.LAVA

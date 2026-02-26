@@ -1,6 +1,12 @@
 package com.woxloi.custombiome.command.sub
 
+import com.sk89q.worldedit.bukkit.BukkitAdapter
+import com.sk89q.worldedit.math.BlockVector3
+import com.sk89q.worldguard.WorldGuard
+import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion
 import com.woxloi.custombiome.api.BiomeRegistry
+import com.woxloi.custombiome.listener.WandListener
+import com.woxloi.custombiome.region.BiomeRegion
 import com.woxloi.custombiome.region.RegionManager
 import com.woxloi.custombiome.utils.Msg
 import org.bukkit.command.CommandSender
@@ -29,10 +35,41 @@ object RegionCommand {
         val biome = BiomeRegistry.get(biomeKey)
         if (biome == null) { Msg.send(sender, "&cバイオーム '&e$biomeKey&c' が見つかりません。"); return }
 
+        // ① 独自ワンド選択を優先チェック
+        val wandSel = WandListener.getSelection(sender.uniqueId)
+        if (wandSel != null && wandSel.isComplete()) {
+            val (p1, p2) = Pair(wandSel.pos1!!, wandSel.pos2!!)
+            val minX = minOf(p1.first, p2.first);  val maxX = maxOf(p1.first, p2.first)
+            val minY = minOf(p1.second, p2.second); val maxY = maxOf(p1.second, p2.second)
+            val minZ = minOf(p1.third, p2.third);   val maxZ = maxOf(p1.third, p2.third)
+
+            val world     = sender.world
+            val regionId  = "cb_${biome.key}_${System.currentTimeMillis() % 10000}"
+            val container = WorldGuard.getInstance().platform.regionContainer
+            val wgManager = container.get(BukkitAdapter.adapt(world))
+
+            if (wgManager == null) { Msg.send(sender, "&cWorldGuard が利用できません。"); return }
+
+            val wgRegion = ProtectedCuboidRegion(
+                regionId,
+                BlockVector3.at(minX, minY, minZ),
+                BlockVector3.at(maxX, maxY, maxZ)
+            )
+            wgManager.addRegion(wgRegion)
+
+            val biomeRegion = BiomeRegion(regionId, world.name, biome, sender.uniqueId.toString())
+            RegionManager.registerDirect(biomeRegion)
+
+            WandListener.clearSelection(sender.uniqueId)
+            Msg.send(sender, "&aワンド選択範囲に &e${biome.displayName} &aを登録しました！ &7(ID: $regionId)")
+            return
+        }
+
+        // ② フォールバック: WorldEdit セレクション
         if (RegionManager.assignBiomeToSelection(sender, biome)) {
             Msg.send(sender, "&aWE選択範囲に &e${biome.displayName} &aを割り当てました！")
         } else {
-            Msg.send(sender, "&cWE選択範囲がありません。先に &e//wand &cで範囲選択してください。")
+            Msg.send(sender, "&c選択範囲がありません。&e/cbiome wand &cでワンドを入手するか、&e//wand &cで WE選択してください。")
         }
     }
 

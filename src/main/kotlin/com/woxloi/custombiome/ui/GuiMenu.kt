@@ -1,24 +1,15 @@
 package com.woxloi.custombiome.ui
 
-import com.woxloi.custombiome.CustomBiomePlugin
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.inventory.InventoryClickEvent
-import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.InventoryHolder
 import org.bukkit.inventory.ItemStack
 
-/**
- * シンプルなチェストGUI基盤。
- * WoxloiDevAPI の MenuBuilder / MenuManager / MenuItem を置き換える自前実装。
- */
-class GuiMenu(
-    val title: String,
-    val size: Int
-) : InventoryHolder {
+class GuiMenu(val title: String, val size: Int) : InventoryHolder {
 
     private val inventory: Inventory = Bukkit.createInventory(this, size, title)
     private val clickHandlers = mutableMapOf<Int, (Player) -> Unit>()
@@ -35,10 +26,6 @@ class GuiMenu(
     }
 }
 
-/**
- * GUI クリックイベントを処理するリスナー。
- * CustomBiomePlugin.onEnable() で登録する。
- */
 class GuiListener : Listener {
 
     @EventHandler

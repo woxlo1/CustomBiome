@@ -15,22 +15,17 @@ object GenerateCommand {
             return
         }
         val biomeKey = args.getOrNull(0)
-        if (biomeKey == null) {
-            Msg.send(sender, "&c使い方: /cbiome generate <biome_key> [world_name] [seed]")
-            return
-        }
+        if (biomeKey == null) { Msg.send(sender, "&c使い方: /cbiome generate <biome_key> [world_name] [seed]"); return }
         val biome = BiomeRegistry.get(biomeKey)
-        if (biome == null) {
-            Msg.send(sender, "&cバイオーム '&e$biomeKey&c' が見つかりません。")
-            return
-        }
+        if (biome == null) { Msg.send(sender, "&cバイオーム '&e$biomeKey&c' が見つかりません。"); return }
+
         val worldName = args.getOrNull(1)
         val seed      = args.getOrNull(2)?.toLongOrNull() ?: 0L
         val createdBy = if (sender is Player) sender.uniqueId.toString() else "console"
 
         Msg.send(sender, "&eワールドを生成中… しばらくお待ちください。")
 
-        // Bukkit スケジューラでメインスレッド実行（WorldCreator はメインスレッド必須）
+        // WorldCreator はメインスレッド必須
         CustomBiomePlugin.instance.server.scheduler.runTask(CustomBiomePlugin.instance, Runnable {
             val world = WorldManager.createWorld(biome, worldName, seed, createdBy)
             if (world != null) {

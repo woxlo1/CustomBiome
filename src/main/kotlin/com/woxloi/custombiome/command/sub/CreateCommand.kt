@@ -13,28 +13,18 @@ object CreateCommand {
             return
         }
         val name = args.getOrNull(0)
-        if (name == null) {
-            Msg.send(sender, "&c使い方: /cbiome create <biome_name>")
-            return
-        }
+        if (name == null) { Msg.send(sender, "&c使い方: /cbiome create <biome_name>"); return }
         val key = name.lowercase().replace(" ", "_")
         val biomesDir = File(CustomBiomePlugin.instance.dataFolder, "biomes")
         if (!biomesDir.exists()) biomesDir.mkdirs()
-
         val file = File(biomesDir, "$key.yml")
-        if (file.exists()) {
-            Msg.send(sender, "&c'&e$key.yml&c' はすでに存在します。")
-            return
-        }
+        if (file.exists()) { Msg.send(sender, "&c'&e$key.yml&c' はすでに存在します。"); return }
         file.writeText(generateTemplate(key, name))
         Msg.send(sender, "&aテンプレートを生成しました: &ebiomes/$key.yml")
         Msg.send(sender, "&7編集後に &e/cbiome reload &7でロードできます。")
     }
 
     private fun generateTemplate(key: String, displayName: String): String = """
-# ===========================
-# カスタムバイオーム定義: $key
-# ===========================
 name: "$key"
 display-name: "&a$displayName"
 description: "ここに説明を入力してください"

@@ -8,11 +8,6 @@ import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.command.TabCompleter
 
-/**
- * /cbiome ルートコマンド。
- * Bukkit 標準の CommandExecutor / TabCompleter を実装。
- * WoxloiDevAPI の CommandNode / CommandRegistry を使わない。
- */
 class CbiomeCommand : CommandExecutor, TabCompleter {
 
     override fun onCommand(
@@ -21,10 +16,7 @@ class CbiomeCommand : CommandExecutor, TabCompleter {
         label: String,
         args: Array<String>
     ): Boolean {
-        if (args.isEmpty()) {
-            sendHelp(sender)
-            return true
-        }
+        if (args.isEmpty()) { sendHelp(sender); return true }
         when (args[0].lowercase()) {
             "list", "ls", "l"        -> ListCommand.execute(sender, args.drop(1))
             "info", "i"              -> InfoCommand.execute(sender, args.drop(1))
@@ -32,6 +24,7 @@ class CbiomeCommand : CommandExecutor, TabCompleter {
             "generate", "gen", "g"   -> GenerateCommand.execute(sender, args.drop(1))
             "tp", "teleport", "goto" -> TeleportCommand.execute(sender, args.drop(1))
             "region", "r"            -> RegionCommand.execute(sender, args.drop(1))
+            "wand"                   -> WandCommand.execute(sender, args.drop(1))
             "reload", "rl"           -> ReloadCommand.execute(sender, args.drop(1))
             else -> Msg.send(sender, "&cサブコマンドが見つかりません。 /cbiome でヘルプを確認してください。")
         }
@@ -45,7 +38,7 @@ class CbiomeCommand : CommandExecutor, TabCompleter {
         args: Array<String>
     ): List<String> {
         if (args.size == 1) {
-            val subs = listOf("list", "info", "create", "generate", "tp", "region", "reload")
+            val subs = listOf("list", "info", "create", "generate", "tp", "region", "wand", "reload")
             return subs.filter { it.startsWith(args[0].lowercase()) }
         }
         return when (args[0].lowercase()) {
@@ -64,6 +57,7 @@ class CbiomeCommand : CommandExecutor, TabCompleter {
         Msg.sendRaw(sender, "  &a/cbiome create <n> &7- テンプレート生成")
         Msg.sendRaw(sender, "  &a/cbiome generate <key> [name] [seed] &7- ワールド生成")
         Msg.sendRaw(sender, "  &a/cbiome tp <world> &7- テレポート")
+        Msg.sendRaw(sender, "  &a/cbiome wand &7- 範囲選択ワンドを入手")
         Msg.sendRaw(sender, "  &a/cbiome region set/assign/clear/list &7- WGリージョン管理")
         Msg.sendRaw(sender, "  &a/cbiome reload &7- 設定リロード")
         Msg.send(sender, "&7登録バイオーム数: &e${BiomeRegistry.count()}")

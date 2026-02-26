@@ -15,10 +15,10 @@ class TerrainGenerator(
     private val noise = SimplexNoise(seed)
 
     fun getHeight(x: Int, z: Int, biome: CustomBiome): Int {
-        val settings = biome.terrain
-        val scale    = noiseScale * settings.noiseScaleMultiplier
-        val hMul     = heightMultiplier * settings.heightMultiplier
-        val raw      = noise.octaveNoise2D(x.toDouble(), z.toDouble(), octaves, persistence, lacunarity, scale)
+        val settings   = biome.terrain
+        val scale      = noiseScale * settings.noiseScaleMultiplier
+        val hMul       = heightMultiplier * settings.heightMultiplier
+        val raw        = noise.octaveNoise2D(x.toDouble(), z.toDouble(), octaves, persistence, lacunarity, scale)
         val normalized = (raw + 1.0) / 2.0
         val shaped     = applyTerrainShape(normalized, settings.type)
         val height     = (baseHeight + shaped * hMul).toInt()
