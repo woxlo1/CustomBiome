@@ -1,7 +1,7 @@
 package com.woxloi.custombiome.listener
 
 import com.woxloi.custombiome.utils.Msg
-import org.bukkit.Material
+import com.woxloi.custombiome.utils.WandItemUtil
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
@@ -11,8 +11,10 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * /cbiome wand で付与した木の斧による範囲選択を処理する。
- * 左クリック→ pos1、右クリック→ pos2。
+ * /cbiome wand で付与した CustomBiome ワンドによる範囲選択を処理する。
+ * 左クリック → pos1、右クリック → pos2。
+ *
+ * 判定は WandItemUtil.isWand() で行い、PDC タグのないただの木の斧には反応しない。
  */
 object WandListener : Listener {
 
@@ -32,7 +34,10 @@ object WandListener : Listener {
     @EventHandler
     fun onInteract(event: PlayerInteractEvent) {
         val player = event.player
-        if (player.inventory.itemInMainHand.type != Material.WOODEN_AXE) return
+
+        // PDC タグで本物の CustomBiome ワンドかどうかを確認
+        if (!WandItemUtil.isWand(player.inventory.itemInMainHand)) return
+
         val block = event.clickedBlock ?: return
 
         when (event.action) {

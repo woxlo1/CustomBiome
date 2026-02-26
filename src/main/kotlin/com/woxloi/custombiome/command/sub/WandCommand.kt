@@ -1,12 +1,9 @@
 package com.woxloi.custombiome.command.sub
 
 import com.woxloi.custombiome.utils.Msg
-import org.bukkit.Material
+import com.woxloi.custombiome.utils.WandItemUtil
 import org.bukkit.command.CommandSender
-import org.bukkit.enchantments.Enchantment
 import org.bukkit.entity.Player
-import org.bukkit.inventory.ItemFlag
-import org.bukkit.inventory.ItemStack
 
 object WandCommand {
 
@@ -20,20 +17,7 @@ object WandCommand {
             return
         }
 
-        val wand = ItemStack(Material.WOODEN_AXE).apply {
-            val meta = itemMeta!!
-            meta.setDisplayName("§b§lCustomBiome §eワンド")
-            meta.lore = listOf(
-                "§7左クリック §f→ Pos1 を設定",
-                "§7右クリック §f→ Pos2 を設定",
-                "§7範囲設定後に §e/cbiome region set <key>"
-            )
-            meta.addEnchant(Enchantment.DURABILITY, 1, true)
-            meta.addItemFlags(ItemFlag.HIDE_ENCHANTS)
-            itemMeta = meta
-        }
-
-        sender.inventory.addItem(wand)
+        sender.inventory.addItem(WandItemUtil.createWand())
         Msg.send(sender, "&bワンドを付与しました！ &7左クリックで Pos1、右クリックで Pos2 を指定してください。")
     }
 }
