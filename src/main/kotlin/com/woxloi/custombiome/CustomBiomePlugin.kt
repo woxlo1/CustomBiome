@@ -93,7 +93,7 @@ class CustomBiomePlugin : JavaPlugin() {
         val biomesDir = File(dataFolder, "biomes")
         if (!biomesDir.exists()) {
             biomesDir.mkdirs()
-            listOf("magic_forest.yml", "ancient_desert.yml").forEach { name ->
+            listOf("magic_forest.yml", "ancient_desert.yml", "coral_ocean.yml", "frozen_peaks.yml", "mesa_plateau.yml").forEach { name ->
                 runCatching { saveResource("biomes/$name", false) }
                     .onFailure { Logger.warn("Could not copy default biome: $name") }
             }
@@ -111,11 +111,8 @@ class CustomBiomePlugin : JavaPlugin() {
             useSSL   = cfg.getBoolean("useSSL", false),
             poolSize = cfg.getInt("pool-size", 10)
         )
-        if (!provider.connect()) {
-            throw IllegalStateException("MySQL connection failed. Check config.yml database settings.")
-        }
-        Logger.success("MySQL connected for CustomBiome.")
-        return BiomeDatabase(provider).also { it.init() }
+        // MySQL に失敗してもフラットファイルにフォールバックするので例外を投げない
+        return BiomeDatabase.create(provider, dataFolder).also { it.init() }
     }
 
     private fun checkRequiredPlugins() {

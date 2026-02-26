@@ -40,6 +40,22 @@ class MySQLProvider(
         }
     }
 
+    /**
+     * 接続を取得して [block] を実行する。
+     * DataSource が null または接続取得に失敗した場合は null を返す。
+     * 呼び出し側は runCatching で囲む必要がなく、戻り値で失敗を判断できる。
+     */
+    fun <T> withConnection(block: (Connection) -> T): T? {
+        val ds = dataSource ?: return null
+        return try {
+            ds.connection.use(block)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    /** 後方互換のため残す。新規コードは withConnection を使うこと。 */
     fun getConnection(): Connection =
         dataSource?.connection ?: throw IllegalStateException("Database is not connected.")
 
