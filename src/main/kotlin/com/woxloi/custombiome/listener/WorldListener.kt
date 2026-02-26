@@ -1,5 +1,6 @@
 package com.woxloi.custombiome.listener
 
+import com.woxloi.custombiome.CustomBiomePlugin
 import com.woxloi.custombiome.generator.FeaturePlacer
 import com.woxloi.custombiome.utils.Logger
 import com.woxloi.custombiome.world.WorldManager
@@ -20,19 +21,29 @@ class WorldListener : Listener {
         val customWorld = WorldManager.getCustomWorld(chunk.world.name) ?: return
         val generator   = customWorld.generator ?: return
 
-        // メインスレッドで直接実行（非同期・getChunkAtAsync は使用禁止）
-        val heightMap = Array(16) { x ->
-            IntArray(16) { z ->
-                generator.getHeightAt(chunk.x * 16 + x, chunk.z * 16 + z)
-            }
-        }
+        // ChunkLoadEvent の中でブロックを直接置くと別チャンクのロードを誘発して
+        // スタックオーバーフローになる場合があるため、1tick後に実行する。
+        // メインスレッドのまま遅延させるので Bukkit API は安全に呼べる。
+        CustomBiomePlugin.instance.server.scheduler.runTask(
+            CustomBiomePlugin.instance,
+            Runnable {
+                // チャンクがまだロードされているか確認
+                if (!chunk.isLoaded) return@Runnable
 
-        try {
-            FeaturePlacer.populate(chunk, customWorld.biome, heightMap, customWorld.seed)
-        } catch (e: Exception) {
-            Logger.error("FeaturePlacer error at chunk (${chunk.x}, ${chunk.z}): ${e.message}")
-            e.printStackTrace()
-        }
+                val heightMap = Array(16) { x ->
+                    IntArray(16) { z ->
+                        generator.getHeightAt(chunk.x * 16 + x, chunk.z * 16 + z)
+                    }
+                }
+
+                try {
+                    FeaturePlacer.populate(chunk, customWorld.biome, heightMap, customWorld.seed)
+                } catch (e: Exception) {
+                    Logger.error("FeaturePlacer error at chunk (${chunk.x}, ${chunk.z}): ${e.message}")
+                    e.printStackTrace()
+                }
+            }
+        )
     }
 
     @EventHandler
