@@ -107,14 +107,29 @@ object RegionManager {
         val container = WorldGuard.getInstance().platform.regionContainer
         val wgManager = container.get(BukkitAdapter.adapt(world)) ?: return null
 
+        // Y 軸込みの座標で適用リージョンを取得
         val pos        = BlockVector3.at(location.blockX, location.blockY, location.blockZ)
         val applicable = wgManager.getApplicableRegions(pos)
 
+        // 複数リージョンが重なった場合は体積が最小（＝最も具体的）なリージョンを優先する
+        // 体積 = (maxX-minX+1) * (maxY-minY+1) * (maxZ-minZ+1)
+        var bestRegion: BiomeRegion? = null
+        var bestVolume = Long.MAX_VALUE
+
         for (wgRegion in applicable) {
             val biomeRegion = regions[wgRegion.id] ?: continue
-            return biomeRegion.biome
+            val min = wgRegion.minimumPoint
+            val max = wgRegion.maximumPoint
+            val volume = (max.x - min.x + 1).toLong() *
+                    (max.y - min.y + 1).toLong() *
+                    (max.z - min.z + 1).toLong()
+            if (volume < bestVolume) {
+                bestVolume = volume
+                bestRegion = biomeRegion
+            }
         }
-        return null
+
+        return bestRegion?.biome
     }
 
     fun getRegion(regionId: String): BiomeRegion? = regions[regionId]
