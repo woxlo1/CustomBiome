@@ -1,0 +1,93 @@
+name: "mesa_plateau"
+display-name: "&6メサ高原"
+description: "赤土の断崖と広大な台地が続く乾燥した高原地帯"
+icon: RED_TERRACOTTA
+
+terrain:
+  type: PLATEAU
+  min-height: 70
+  max-height: 130
+  noise-scale-multiplier: 0.9
+  height-multiplier: 1.2
+
+blocks:
+  surface: RED_SAND
+  subsurface: TERRACOTTA
+  deep: RED_TERRACOTTA
+  bedrock-layer: DEEPSLATE
+  fluid: WATER
+  sea-level: 62
+  surface-decorations:
+    - block: DEAD_BUSH
+      chance: 0.08
+    - block: RED_SAND
+      chance: 0.15
+
+features:
+  trees:
+    enabled: false
+    types: []
+    max-per-chunk: 0
+    chance: 0.0
+  vegetation:
+    enabled: true
+    plants:
+      - block: DEAD_BUSH
+        chance: 0.3
+        max-per-chunk: 12
+      - block: CACTUS
+        chance: 0.1
+        max-per-chunk: 6
+  ores:
+    enabled: true
+    veins:
+      - block: GOLD_ORE
+        min-height: -64
+        max-height: 64
+        vein-size: 9
+        chance: 0.9
+      - block: COAL_ORE
+        min-height: 0
+        max-height: 128
+        vein-size: 17
+        chance: 0.5
+      - block: IRON_ORE
+        min-height: -32
+        max-height: 64
+        vein-size: 9
+        chance: 0.6
+  structures:
+    caves: true
+    dungeons: false
+
+spawns:
+  day:
+    - entity: HUSK
+      min: 1
+      max: 4
+      weight: 10
+    - entity: RABBIT
+      min: 2
+      max: 4
+      weight: 12
+  night:
+    - entity: HUSK
+      min: 3
+      max: 6
+      weight: 12
+    - entity: SPIDER
+      min: 1
+      max: 3
+      weight: 8
+  water: []
+
+weather:
+  temperature: 2.0
+  humidity: 0.0
+  rain-chance: 0.0
+  sky-color: "E8B86D"
+
+ambience:
+  particles:
+    enabled: false
+  sounds: []

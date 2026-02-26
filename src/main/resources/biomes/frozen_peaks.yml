@@ -1,0 +1,101 @@
+name: "frozen_peaks"
+display-name: "&f凍てつく山岳"
+description: "雪と氷に覆われた険しい高山地帯"
+icon: PACKED_ICE
+
+terrain:
+  type: MOUNTAINS
+  min-height: 80
+  max-height: 220
+  noise-scale-multiplier: 0.6
+  height-multiplier: 1.8
+
+blocks:
+  surface: SNOW_BLOCK
+  subsurface: STONE
+  deep: STONE
+  bedrock-layer: DEEPSLATE
+  fluid: ICE
+  sea-level: 62
+  surface-decorations:
+    - block: ICE
+      chance: 0.1
+    - block: PACKED_ICE
+      chance: 0.05
+
+features:
+  trees:
+    enabled: true
+    types:
+      - type: SPRUCE
+        weight: 100
+    max-per-chunk: 2
+    chance: 0.2
+  vegetation:
+    enabled: true
+    plants:
+      - block: SNOW
+        chance: 0.4
+        max-per-chunk: 24
+  ores:
+    enabled: true
+    veins:
+      - block: IRON_ORE
+        min-height: 0
+        max-height: 128
+        vein-size: 9
+        chance: 0.7
+      - block: COAL_ORE
+        min-height: 0
+        max-height: 192
+        vein-size: 17
+        chance: 0.6
+      - block: EMERALD_ORE
+        min-height: -16
+        max-height: 256
+        vein-size: 3
+        chance: 0.25
+      - block: DIAMOND_ORE
+        min-height: -64
+        max-height: 16
+        vein-size: 8
+        chance: 0.15
+  structures:
+    caves: true
+    dungeons: false
+
+spawns:
+  day:
+    - entity: GOAT
+      min: 2
+      max: 4
+      weight: 15
+    - entity: POLAR_BEAR
+      min: 1
+      max: 2
+      weight: 5
+  night:
+    - entity: STRAY
+      min: 2
+      max: 4
+      weight: 10
+    - entity: SKELETON
+      min: 1
+      max: 3
+      weight: 8
+  water: []
+
+weather:
+  temperature: -0.5
+  humidity: 0.3
+  rain-chance: 0.1
+  sky-color: "B0C4DE"
+
+ambience:
+  particles:
+    enabled: true
+    type: SNOWFLAKE
+    density: 0.03
+  sounds:
+    - sound: WEATHER_RAIN
+      chance: 0.005
