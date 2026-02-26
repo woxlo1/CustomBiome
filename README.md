@@ -130,11 +130,31 @@ ambience:
 | `/cbiome create <name>` | バイオームYAMLテンプレート生成 | `custombiome.create` |
 | `/cbiome generate <key> [name] [seed]` | カスタムワールド生成 | `custombiome.generate` |
 | `/cbiome tp <world>` | カスタムワールドへTP | `custombiome.tp` |
-| `/cbiome region set <key>` | WE選択範囲にバイオーム割り当て | `custombiome.region` |
+| `/cbiome wand` | 範囲選択ワンド（木の斧）を入手 | `custombiome.region` |
+| `/cbiome region set <key>` | ワンドまたはWE選択範囲にバイオームを登録 | `custombiome.region` |
 | `/cbiome region assign <id> <key>` | 既存WGリージョンにバイオーム割り当て | `custombiome.region` |
 | `/cbiome region clear <id>` | リージョン割り当て解除 | `custombiome.region` |
 | `/cbiome region list` | 割り当て済みリージョン一覧 | `custombiome.region` |
 | `/cbiome reload` | 設定・バイオームリロード | `custombiome.reload` |
+
+---
+
+## バイオーム範囲の登録方法
+
+### 方法 1 — 独自ワンドを使う（推奨）
+
+1. `/cbiome wand` でワンド（木の斧）を入手
+2. **左クリック** でPos1（始点）を指定
+3. **右クリック** でPos2（終点）を指定
+4. `/cbiome region set <biome_key>` で登録
+
+### 方法 2 — WorldEdit の選択範囲を使う
+
+1. `//wand` で WorldEdit のワンドを入手し範囲選択
+2. `/cbiome region set <biome_key>` で登録
+
+> どちらの方法でも `/cbiome region set` で登録できます。  
+> 独自ワンドの選択が存在する場合はそちらが優先されます。
 
 ---
 
@@ -147,7 +167,7 @@ ambience:
 | `custombiome.generate` | op | ワールド生成 |
 | `custombiome.tp` | op | テレポート |
 | `custombiome.reload` | op | リロード |
-| `custombiome.region` | op | リージョン操作 |
+| `custombiome.region` | op | リージョン操作・ワンド使用 |
 
 ---
 
@@ -161,8 +181,19 @@ ambience:
 | `MySQLProvider` / `DatabaseRegistry` / `DatabaseTable` | HikariCP + JDBC 直接実装 |
 | `HookManager` | `server.pluginManager.getPlugin()` |
 | `WorldEditAPI` / `WorldGuardAPI` | WorldEdit / WorldGuard 直接 API |
-| `TaskScheduler` | `server.scheduler.runTask` / `runTaskAsynchronously` |
+| `TaskScheduler` | `server.scheduler.runTask` |
 | `MenuBuilder` / `MenuManager` / `MenuItem` | `InventoryHolder` ベースの `GuiMenu` |
+
+---
+
+## 変更履歴
+
+### 最新
+
+- **fix**: `onChunkLoad` での `getChunkAtAsync` / `thenAcceptAsync` を廃止し、メインスレッドで同期実行するよう変更（サーバータイムアウトの原因を修正）
+- **feat**: `/cbiome wand` コマンドを追加 — 木の斧を使った独自の範囲選択機能
+- **feat**: `WandListener` を追加 — 左クリックでPos1、右クリックでPos2を指定
+- `/cbiome region set` をワンド選択優先・WEセレクションフォールバックに変更
 
 ---
 
